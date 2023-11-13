@@ -8,6 +8,8 @@ services:
       - POSTGRES_PASSWORD=${DB_PASS}
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
       # Uncomment for logging all SQL statements
       # command: ["postgres", "-c", "log_statement=all"]
   api:
