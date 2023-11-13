@@ -1,0 +1,25 @@
+type Objekt @entity {
+  id: ID!
+  contract: String! @index
+  # objekt fields
+  collectionId: String! @index
+  season: String! @index
+  member: String! @index
+  artist: String! @index
+  collectionNo: String! @index
+  class: String! @index
+  frontImage: String!
+  backImage: String!
+  backgroundColor: String!
+  textColor: String!
+  comoAmount: Int!
+  onOffline: String! @index
+}
+
+type ComoCalendar @entity {
+  id: ID!
+  contract: String! @index
+  address: String! @index
+  day: Int! @index
+  amount: Int!
+}
