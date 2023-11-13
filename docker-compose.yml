@@ -2,6 +2,7 @@ version: "3"
 
 services:
   db:
+    restart: always
     image: postgres:15
     environment:
       - POSTGRES_DB=${DB_NAME}
@@ -27,6 +28,7 @@ services:
       - db
   processor:
     image: apollo-objekts
+    restart: always
     environment:
       - DB_NAME
       - DB_PORT=5432

@@ -137,6 +137,7 @@ async function handleComo(
   const day = new Date(event.timestamp).getDate();
 
   let sender = await ctx.store.findOneBy(ComoCalendar, {
+    contract: event.contract,
     address: event.from,
     day,
   });
@@ -156,6 +157,7 @@ async function handleComo(
   }
 
   let recipient = await ctx.store.findOneBy(ComoCalendar, {
+    contract: event.contract,
     address: event.to,
     day,
   });

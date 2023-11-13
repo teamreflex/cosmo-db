@@ -18,9 +18,9 @@ export function parseEvent(
   if (log.topics[0] === spec.events["Transfer"].topic) {
     const event = spec.events["Transfer"].decode(log);
     return {
-      from: event.from,
-      to: event.to,
-      contract: log.address,
+      from: event.from.toLowerCase(),
+      to: event.to.toLowerCase(),
+      contract: log.address.toLowerCase(),
       tokenId: event.tokenId.toString(),
       timestamp: log.block.timestamp,
     };
