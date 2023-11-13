@@ -30,13 +30,15 @@ export type ObjektMetadata = {
 
 export async function buildObjektEntity(metadata: ObjektMetadata) {
   return new Objekt({
-    contract: metadata.objekt.tokenAddress,
+    contract: metadata.objekt.tokenAddress.toLowerCase(),
     collectionId: metadata.objekt.collectionId,
     season: metadata.objekt.season,
     member: metadata.objekt.member,
     // for some reason artists comes back as undefined
     artist:
-      metadata.objekt.tokenAddress === CONTRACT_TRIPLES ? "tripleS" : "artms",
+      metadata.objekt.tokenAddress.toLowerCase() === CONTRACT_TRIPLES
+        ? "tripleS"
+        : "artms",
     collectionNo: metadata.objekt.collectionNo,
     class: metadata.objekt.class,
     frontImage: metadata.objekt.frontImage,

@@ -17,7 +17,7 @@ processor.run(db, async (ctx) => {
   // parse token ids from blocks
   for (let block of ctx.blocks) {
     for (let log of block.logs) {
-      if (!CONTRACTS.includes(log.address)) continue;
+      if (!CONTRACTS.includes(log.address.toLowerCase())) continue;
 
       try {
         events.push(parseEvent(ctx, log));
