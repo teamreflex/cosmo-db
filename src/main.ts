@@ -64,9 +64,11 @@ processor.run(db, async (ctx) => {
           objekts.push(newObjekt);
         }
 
-        const newCalendars = await handleComo(ctx, events[i], raw);
-        if (newCalendars.length > 0) {
-          calendars.push(...newCalendars);
+        if (raw.objekt.class === "Special") {
+          const newCalendars = await handleComo(ctx, events[i], raw);
+          if (newCalendars.length > 0) {
+            calendars.push(...newCalendars);
+          }
         }
       } else {
         ctx.log.error(
