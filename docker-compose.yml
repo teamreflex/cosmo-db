@@ -31,6 +31,7 @@ services:
       - DB_PORT=5432
       - DB_HOST=db
       - DB_PASS
+      - ALCHEMY_KEY
     command: ["sqd", "process:prod"]
     depends_on:
       - db
