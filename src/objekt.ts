@@ -47,8 +47,8 @@ export async function buildObjektEntity(metadata: ObjektMetadata) {
     textColor: metadata.objekt.textColor,
     comoAmount: metadata.objekt.comoAmount,
     onOffline: metadata.objekt.collectionNo.includes("Z")
-      ? "offline"
-      : "online",
+      ? "online"
+      : "offline",
   });
 }
 
