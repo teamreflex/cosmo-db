@@ -35,6 +35,9 @@ services:
       - DB_HOST=db
       - DB_PASS
       - ALCHEMY_KEY
+    ports:
+      # prometheus metrics exposed at port 3000
+      - "3000:3000"
     command: ["sqd", "process:prod"]
     depends_on:
       - db

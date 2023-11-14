@@ -1,6 +1,4 @@
 import { Objekt } from "./model";
-// import ky from "ky";
-import { Alchemy, Network, NftTokenType } from "alchemy-sdk";
 import "dotenv";
 import { CONTRACT_TRIPLES } from "./constants";
 
@@ -34,7 +32,7 @@ export async function buildObjektEntity(metadata: ObjektMetadata) {
     collectionId: metadata.objekt.collectionId,
     season: metadata.objekt.season,
     member: metadata.objekt.member,
-    // for some reason artists comes back as undefined
+    // artists comes back as undefined sometimes
     artist:
       metadata.objekt.tokenAddress.toLowerCase() === CONTRACT_TRIPLES
         ? "tripleS"
@@ -52,25 +50,20 @@ export async function buildObjektEntity(metadata: ObjektMetadata) {
   });
 }
 
-// export async function fetchMetadata(tokenId: string) {
-//   return await ky
-//     .get(`https://api.cosmo.fans/objekt/v1/token/${tokenId}`, {
-//       retry: 3,
-//     })
-//     .json<ObjektMetadata>();
-// }
-
-export type Token = {
-  tokenId: string;
-  contractAddress: string;
-  tokenType: NftTokenType.ERC721;
-};
-
-export async function fetchBatchMetadata(tokens: Token[]) {
-  const alchemy = new Alchemy({
-    apiKey: process.env.ALCHEMY_KEY,
-    network: Network.MATIC_MAINNET,
-  });
-
-  return await alchemy.nft.getNftMetadataBatch(tokens);
+export async function fetchMetadataFromCosmo(
+  tokenId: string,
+  retryCount = 0,
+  maxRetries = 3
+) {
+  try {
+    const res = await fetch(
+      `https://api.cosmo.fans/objekt/v1/token/${tokenId}`
+    );
+    return (await res.json()) as ObjektMetadata;
+  } catch (err) {
+    if (retryCount < maxRetries) {
+      return fetchMetadataFromCosmo(tokenId, retryCount + 1);
+    }
+    throw err;
+  }
 }

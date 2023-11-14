@@ -18,6 +18,9 @@ export class Objekt {
   @Column_("text", { nullable: false })
   contract!: string;
 
+  @Column_("int4", { nullable: false })
+  timestamp!: number;
+
   @Index_()
   @Column_("text", { nullable: false })
   collectionId!: string;

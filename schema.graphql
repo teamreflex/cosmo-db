@@ -1,6 +1,7 @@
 type Objekt @entity {
   id: ID!
   contract: String! @index
+  timestamp: Int!
   # objekt fields
   collectionId: String! @index
   season: String! @index

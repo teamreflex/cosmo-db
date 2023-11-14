@@ -17,6 +17,7 @@ import {
 export const processor = new EvmBatchProcessor()
   .setDataSource({
     archive: lookupArchive("polygon", { type: "EVM" }),
+    chain: "https://polygon-rpc.com",
   })
   .setFields({
     log: {
