@@ -106,33 +106,41 @@ async function handleComo(
   comoAmount: number
 ) {
   const entities: ComoCalendar[] = [];
+  const senderIsMint = event.from === MINT_ADDRESS;
+  const recipientIsBurn = event.to === MINT_ADDRESS; // should never happen?
   const day = new Date(event.timestamp).getDate();
 
   let { sender, recipient } = await getExistingCalendars(buffer, ctx, event);
 
-  if (sender) {
-    sender.amount -= comoAmount;
-  } else {
-    sender = new ComoCalendar({
-      address: event.from,
-      amount: 0,
-      contract: event.contract,
-      day,
-    });
+  // skip updating the sender calendar upon a new mint
+  if (senderIsMint === false) {
+    if (sender) {
+      sender.amount -= comoAmount;
+    } else {
+      sender = new ComoCalendar({
+        address: event.from,
+        amount: 0,
+        contract: event.contract,
+        day,
+      });
+    }
+    entities.push(sender);
   }
-  entities.push(sender);
 
-  if (recipient) {
-    recipient.amount += comoAmount;
-  } else {
-    recipient = new ComoCalendar({
-      address: event.to,
-      amount: comoAmount,
-      contract: event.contract,
-      day,
-    });
+  // skip updating the recipient calendar upon a burn
+  if (recipientIsBurn === false) {
+    if (recipient) {
+      recipient.amount += comoAmount;
+    } else {
+      recipient = new ComoCalendar({
+        address: event.to,
+        amount: comoAmount,
+        contract: event.contract,
+        day,
+      });
+    }
+    entities.push(recipient);
   }
-  entities.push(recipient);
 
   return entities;
 }
@@ -166,40 +174,30 @@ async function getExistingCalendars(
   ctx: DataHandlerContext<Store>,
   event: TransferEvent
 ) {
-  const isMinted = event.from === MINT_ADDRESS;
-  const isBurned = event.to === MINT_ADDRESS; // should never happen?
   const day = new Date(event.timestamp).getDate();
 
-  let sender: ComoCalendar | undefined;
-  if (isMinted) {
-    sender = buffer.find(
-      (c) =>
-        c.address === event.from &&
-        c.day === day &&
-        c.contract === event.contract
-    );
-    if (!sender) {
-      sender = await ctx.store.findOneBy(ComoCalendar, {
-        address: event.from,
-        day,
-        contract: event.contract,
-      });
-    }
+  let sender = buffer.find(
+    (c) =>
+      c.address === event.from && c.day === day && c.contract === event.contract
+  );
+  if (!sender) {
+    sender = await ctx.store.findOneBy(ComoCalendar, {
+      address: event.from,
+      day,
+      contract: event.contract,
+    });
   }
 
-  let recipient: ComoCalendar | undefined;
-  if (!isBurned) {
-    recipient = buffer.find(
-      (c) =>
-        c.address === event.to && c.day === day && c.contract === event.contract
-    );
-    if (!recipient) {
-      recipient = await ctx.store.findOneBy(ComoCalendar, {
-        address: event.to,
-        day,
-        contract: event.contract,
-      });
-    }
+  let recipient = buffer.find(
+    (c) =>
+      c.address === event.to && c.day === day && c.contract === event.contract
+  );
+  if (!recipient) {
+    recipient = await ctx.store.findOneBy(ComoCalendar, {
+      address: event.to,
+      day,
+      contract: event.contract,
+    });
   }
 
   return { sender, recipient };
