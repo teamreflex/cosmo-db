@@ -24,7 +24,7 @@ processor.run(db, async (ctx) => {
       if (!CONTRACTS.includes(addr(log.address))) continue;
 
       try {
-        events.push(parseEvent(ctx, log));
+        events.push(parseEvent(log));
       } catch (err) {
         continue;
       }

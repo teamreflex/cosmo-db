@@ -1,5 +1,3 @@
-import { DataHandlerContext } from "@subsquid/evm-processor";
-import { Store } from "./db";
 import * as spec from "./abi/objekt";
 import { Log } from "./processor";
 import { addr } from "./util";
@@ -12,10 +10,7 @@ export type TransferEvent = {
   timestamp: number;
 };
 
-export function parseEvent(
-  ctx: DataHandlerContext<Store>,
-  log: Log
-): TransferEvent {
+export function parseEvent(log: Log): TransferEvent {
   if (log.topics[0] === spec.events["Transfer"].topic) {
     const event = spec.events["Transfer"].decode(log);
     return {
@@ -27,15 +22,5 @@ export function parseEvent(
     };
   }
 
-  const error = new Error(`Unknown event "${log.topics[0]}"`);
-  ctx.log.error(
-    {
-      error,
-      blockNumber: log.block.height,
-      blockHash: log.block.hash,
-      address: log.address,
-    },
-    `Unable to decode event "${log.topics[0]}"`
-  );
-  throw error;
+  throw new Error(`Unknown event "${log.topics[0]}"`);
 }
