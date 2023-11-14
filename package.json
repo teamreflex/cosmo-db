@@ -1,6 +1,8 @@
 {
-  "name": "squid-evm-template",
+  "name": "cosmo-db",
+  "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "rm -rf lib/ && tsc"
   },
