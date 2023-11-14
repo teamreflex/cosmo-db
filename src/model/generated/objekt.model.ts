@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, Index } from "typeorm";
+import { Entity, Column, Index, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Objekt {
@@ -6,7 +6,7 @@ export class Objekt {
     Object.assign(this, props);
   }
 
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
   id!: string;
 
   @Index()

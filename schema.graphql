@@ -1,7 +1,7 @@
 type Objekt @entity {
-  id: ID!
+  id: ID! @index
   contract: String! @index
-  timestamp: BigInt!
+  timestamp: BigInt! @index
   # objekt fields
   collectionId: String! @index
   season: String! @index
@@ -18,7 +18,7 @@ type Objekt @entity {
 }
 
 type ComoCalendar @entity {
-  id: ID!
+  id: ID! @index
   contract: String! @index
   address: String! @index
   day: Int! @index
