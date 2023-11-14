@@ -33,7 +33,7 @@ export const processor = new EvmBatchProcessor()
       status: true,
     },
   })
-  .setFinalityConfirmation(100)
+  .setFinalityConfirmation(200)
   // artms objekts
   .addLog({
     address: [CONTRACT_ARTMS],
