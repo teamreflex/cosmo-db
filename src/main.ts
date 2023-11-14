@@ -49,7 +49,7 @@ processor.run(db, async (ctx) => {
           result.value
         );
         if (currentObjekt) {
-          currentObjekt.timestamp = events[i].timestamp;
+          currentObjekt.timestamp = BigInt(events[i].timestamp);
           objekts.push(currentObjekt);
         }
 

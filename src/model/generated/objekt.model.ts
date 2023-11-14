@@ -18,8 +18,8 @@ export class Objekt {
   @Column_("text", { nullable: false })
   contract!: string;
 
-  @Column_("int4", { nullable: false })
-  timestamp!: number;
+  @Column_("bigint", { nullable: false })
+  timestamp!: BigInt;
 
   @Index_()
   @Column_("text", { nullable: false })
