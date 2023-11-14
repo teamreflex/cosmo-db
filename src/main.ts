@@ -59,10 +59,15 @@ processor.run(db, async (ctx) => {
 
         // handle como transfer
         if (result.value.objekt.class !== "Special") continue;
-        calendars.push(await handleSender(ctx, calendars, event, result.value));
-        calendars.push(
-          await handleRecipient(ctx, calendars, event, result.value)
+        const newCalendars = await handleComo(
+          ctx,
+          calendars,
+          event,
+          result.value
         );
+        if (newCalendars.length > 0) {
+          calendars.push(...newCalendars);
+        }
       } else {
         ctx.log.error(`Unable to fetch metadata for token ${event.tokenId}`);
         continue;
@@ -95,63 +100,61 @@ async function handleCollection(
 }
 
 /**
- * Update the sender calendar.
+ * Update the como calendars for the event.
  */
-async function handleSender(
+async function handleComo(
   ctx: DataHandlerContext<Store>,
   buffer: ComoCalendar[],
   event: TransferEvent,
   metadata: ObjektMetadata
 ) {
   const day = new Date(event.timestamp).getDate();
-  const calendar = await getCalendar(
-    buffer,
-    ctx,
-    day,
-    event.from,
-    addr(metadata.objekt.tokenAddress)
-  );
+  const isMint = matches(event.from, MINT_ADDRESS);
+  const isBurn = matches(event.to, MINT_ADDRESS);
 
-  // skip updating the sender calendar upon a new mint
-  if (matches(event.from, MINT_ADDRESS)) {
-    return calendar;
+  // transfer is a new mint, only update the recipient calendar
+  if (isMint && !isBurn) {
+    const calendar = await getCalendar(
+      buffer,
+      ctx,
+      day,
+      addr(event.from),
+      addr(metadata.objekt.tokenAddress)
+    );
+    calendar.amount += metadata.objekt.comoAmount;
+    return [calendar];
   }
 
-  ctx.log.info(
-    `Decrementing sender calendar by ${metadata.objekt.comoAmount} for ${metadata.objekt.collectionId}`
-  );
-  calendar.amount -= metadata.objekt.comoAmount;
-  return calendar;
-}
-
-/**
- * Update the recipient calendar.
- */
-async function handleRecipient(
-  ctx: DataHandlerContext<Store>,
-  buffer: ComoCalendar[],
-  event: TransferEvent,
-  metadata: ObjektMetadata
-) {
-  const day = new Date(event.timestamp).getDate();
-  const calendar = await getCalendar(
-    buffer,
-    ctx,
-    day,
-    event.to,
-    addr(metadata.objekt.tokenAddress)
-  );
-
-  // skip updating the recipient calendar upon a burn
-  if (matches(event.to, MINT_ADDRESS)) {
-    return calendar;
+  // transfer is a burn, do nothing
+  if (!isMint && isBurn) {
+    return [];
   }
 
-  ctx.log.info(
-    `Incrementing recipient calendar by ${metadata.objekt.comoAmount} for ${metadata.objekt.collectionId}`
-  );
-  calendar.amount += metadata.objekt.comoAmount;
-  return calendar;
+  // transfer is a valid send, update both calendars
+  if (!isMint && !isBurn) {
+    const sender = await getCalendar(
+      buffer,
+      ctx,
+      day,
+      addr(event.from),
+      addr(metadata.objekt.tokenAddress)
+    );
+    sender.amount -= metadata.objekt.comoAmount;
+
+    const recipient = await getCalendar(
+      buffer,
+      ctx,
+      day,
+      addr(event.to),
+      addr(metadata.objekt.tokenAddress)
+    );
+    recipient.amount += metadata.objekt.comoAmount;
+
+    return [sender, recipient];
+  }
+
+  // can't be a mint and burn at the same time, i think
+  return [];
 }
 
 /**
