@@ -62,7 +62,7 @@ export async function fetchMetadataFromCosmo(
     return (await res.json()) as ObjektMetadata;
   } catch (err) {
     if (retryCount < maxRetries) {
-      return fetchMetadataFromCosmo(tokenId, retryCount + 1);
+      return fetchMetadataFromCosmo(tokenId, retryCount + 1, maxRetries);
     }
     throw err;
   }

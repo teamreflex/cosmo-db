@@ -36,11 +36,17 @@ processor.run(db, async (ctx) => {
     ctx.log.info(`Fetching metadata for ${current.length} tokens`);
 
     const metadata = await Promise.allSettled(
-      events.map((e) => fetchMetadataFromCosmo(e.tokenId))
+      current.map((e) => fetchMetadataFromCosmo(e.tokenId))
     );
 
     // act upon each objekt
-    for (let result of metadata) {
+    for (
+      let metadataIndex = 0;
+      metadataIndex < metadata.length;
+      metadataIndex++
+    ) {
+      const result = metadata[metadataIndex];
+
       if (result.status === "fulfilled" && result.value.objekt !== undefined) {
         // handle objekt
         const currentObjekt = await handleCollection(
@@ -49,7 +55,7 @@ processor.run(db, async (ctx) => {
           result.value
         );
         if (currentObjekt) {
-          currentObjekt.timestamp = BigInt(events[i].timestamp);
+          currentObjekt.timestamp = BigInt(current[metadataIndex].timestamp);
           objekts.push(currentObjekt);
         }
 
@@ -58,14 +64,14 @@ processor.run(db, async (ctx) => {
           const currentCalendars = await handleComo(
             calendars,
             ctx,
-            events[i],
+            current[metadataIndex],
             result.value.objekt.comoAmount
           );
           calendars.push(...currentCalendars);
         }
       } else {
         ctx.log.error(
-          `Unable to fetch metadata for token ${events[i].tokenId}`
+          `Unable to fetch metadata for token ${current[metadataIndex].tokenId}`
         );
         continue;
       }
