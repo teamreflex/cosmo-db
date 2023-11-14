@@ -11,6 +11,10 @@ import { ComoCalendar, Objekt } from "./model";
 import { DataHandlerContext } from "@subsquid/evm-processor";
 import { addr, matches } from "./util";
 
+function calendarKey(contract: string, address: string, day: number) {
+  return `${addr(contract)}:${addr(address)}:${day}`;
+}
+
 processor.run(db, async (ctx) => {
   const events: TransferEvent[] = [];
 
@@ -29,8 +33,8 @@ processor.run(db, async (ctx) => {
 
   // fetch metadata for token ids
   for (let i = 0; i < events.length; i += PARALLEL_COUNT) {
-    const objekts: Objekt[] = [];
-    const calendars: ComoCalendar[] = [];
+    const objekts = new Map<string, Objekt>();
+    const calendars = new Map<string, ComoCalendar>();
 
     const current = events.slice(i, i + PARALLEL_COUNT);
 
@@ -50,10 +54,16 @@ processor.run(db, async (ctx) => {
 
       if (result.status === "fulfilled" && result.value.objekt !== undefined) {
         // handle objekt
-        const newObjekt = await handleCollection(objekts, ctx, result.value);
-        if (newObjekt) {
-          newObjekt.timestamp = BigInt(event.timestamp);
-          objekts.push(newObjekt);
+        const objekt = await getExistingObjekt(objekts, ctx, result.value);
+        if (objekt === undefined) {
+          ctx.log.info(
+            `Inserting new objekt ${result.value.objekt.collectionId}`
+          );
+          const newObjekt = await buildObjektEntity(result.value);
+          if (newObjekt) {
+            newObjekt.timestamp = BigInt(event.timestamp);
+            objekts.set(newObjekt.collectionId, newObjekt);
+          }
         }
 
         // handle como transfer
@@ -64,8 +74,12 @@ processor.run(db, async (ctx) => {
             event,
             result.value
           );
-          if (newCalendars.length > 0) {
-            calendars.push(...newCalendars);
+          for (let calendar of newCalendars) {
+            if (matches(calendar.address, MINT_ADDRESS)) continue;
+            calendars.set(
+              calendarKey(calendar.contract, calendar.address, calendar.day),
+              calendar
+            );
           }
         }
       } else {
@@ -74,100 +88,56 @@ processor.run(db, async (ctx) => {
     }
 
     // save entities
-    if (objekts.length > 0) {
-      await ctx.store.upsert(objekts);
+    if (objekts.size > 0) {
+      await ctx.store.upsert(Array.from(objekts.values()));
     }
-    if (calendars.length > 0) {
-      await ctx.store.upsert(calendars);
+    if (calendars.size > 0) {
+      await ctx.store.upsert(Array.from(calendars.values()));
     }
   }
 });
-
-/**
- * Insert any new objekts into the database.
- */
-async function handleCollection(
-  buffer: Objekt[],
-  ctx: DataHandlerContext<Store>,
-  metadata: ObjektMetadata
-) {
-  const objekt = await getExistingObjekt(buffer, ctx, metadata);
-  if (objekt !== undefined) return;
-
-  ctx.log.info(`Inserting new objekt ${metadata.objekt.collectionId}`);
-  return await buildObjektEntity(metadata);
-}
 
 /**
  * Update the como calendars for the event.
  */
 async function handleComo(
   ctx: DataHandlerContext<Store>,
-  buffer: ComoCalendar[],
+  buffer: Map<string, ComoCalendar>,
   event: TransferEvent,
   metadata: ObjektMetadata
 ) {
   const day = new Date(event.timestamp).getDate();
-  const isMint = matches(event.from, MINT_ADDRESS);
-  const isBurn = matches(event.to, MINT_ADDRESS);
 
-  // transfer is a new mint, only update the recipient calendar
-  if (isMint && !isBurn) {
-    const calendar = await getCalendar(
-      buffer,
-      ctx,
-      day,
-      addr(event.to),
-      addr(metadata.objekt.tokenAddress)
-    );
-    calendar.amount += metadata.objekt.comoAmount;
-    return [calendar];
-  }
+  const sender = await getCalendar(
+    buffer,
+    ctx,
+    day,
+    event.from,
+    addr(metadata.objekt.tokenAddress)
+  );
+  sender.amount -= metadata.objekt.comoAmount;
 
-  // transfer is a burn, do nothing
-  if (!isMint && isBurn) {
-    return [];
-  }
+  const recipient = await getCalendar(
+    buffer,
+    ctx,
+    day,
+    event.to,
+    addr(metadata.objekt.tokenAddress)
+  );
+  recipient.amount += metadata.objekt.comoAmount;
 
-  // transfer is a valid send, update both calendars
-  if (!isMint && !isBurn) {
-    const sender = await getCalendar(
-      buffer,
-      ctx,
-      day,
-      addr(event.from),
-      addr(metadata.objekt.tokenAddress)
-    );
-    sender.amount -= metadata.objekt.comoAmount;
-
-    const recipient = await getCalendar(
-      buffer,
-      ctx,
-      day,
-      addr(event.to),
-      addr(metadata.objekt.tokenAddress)
-    );
-    recipient.amount += metadata.objekt.comoAmount;
-
-    return [sender, recipient];
-  }
-
-  // can't be a mint and burn at the same time, i think
-  return [];
+  return [sender, recipient];
 }
 
 /**
  * Pull existing objekt from buffer or db.
  */
 async function getExistingObjekt(
-  buffer: Objekt[],
+  buffer: Map<string, Objekt>,
   ctx: DataHandlerContext<Store>,
   metadata: ObjektMetadata
 ) {
-  let existing = buffer.find(
-    (o) => o.collectionId === metadata.objekt.collectionId
-  );
-
+  let existing = buffer.get(metadata.objekt.collectionId);
   if (existing === undefined) {
     existing = await ctx.store.findOneBy(Objekt, {
       collectionId: metadata.objekt.collectionId,
@@ -181,38 +151,29 @@ async function getExistingObjekt(
  * Pull existing calendar from buffer/db, or make the entity.
  */
 async function getCalendar(
-  buffer: ComoCalendar[],
+  buffer: Map<string, ComoCalendar>,
   ctx: DataHandlerContext<Store>,
   day: number,
   address: string,
   contract: string
 ) {
   // check the buffer
-  let calendar = buffer.find(
-    (c) =>
-      matches(c.address, address) &&
-      c.day === day &&
-      matches(c.contract, contract)
-  );
+  let calendar = buffer.get(calendarKey(contract, address, day));
+  if (calendar) return calendar;
 
   // check the database
-  if (!calendar) {
-    calendar = await ctx.store.findOneBy(ComoCalendar, {
-      address: addr(address),
-      day,
-      contract: addr(contract),
-    });
-  }
+  calendar = await ctx.store.findOneBy(ComoCalendar, {
+    address,
+    day,
+    contract: addr(contract),
+  });
+  if (calendar) return calendar;
 
   // create if necessary
-  if (!calendar) {
-    calendar = new ComoCalendar({
-      address: addr(address),
-      amount: 0,
-      contract: addr(contract),
-      day,
-    });
-  }
-
-  return calendar;
+  return new ComoCalendar({
+    address,
+    amount: 0,
+    contract: addr(contract),
+    day,
+  });
 }

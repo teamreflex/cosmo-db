@@ -11,7 +11,7 @@ export class ComoCalendar {
     Object.assign(this, props);
   }
 
-  @PrimaryGeneratedColumn_("increment")
+  @PrimaryGeneratedColumn_("uuid")
   id!: string;
 
   @Index_()
