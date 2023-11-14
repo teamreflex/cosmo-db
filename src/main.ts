@@ -47,43 +47,45 @@ processor.run(db, async (ctx) => {
       metadataIndex++
     ) {
       const result = metadata[metadataIndex];
+      const event = current[metadataIndex];
 
       if (result.status === "fulfilled" && result.value.objekt !== undefined) {
         // handle objekt
-        const currentObjekt = await handleCollection(
-          objekts,
-          ctx,
-          result.value
-        );
-        if (currentObjekt) {
-          currentObjekt.timestamp = BigInt(current[metadataIndex].timestamp);
-          objekts.push(currentObjekt);
+        const newObjekt = await handleCollection(objekts, ctx, result.value);
+        if (newObjekt) {
+          newObjekt.timestamp = BigInt(event.timestamp);
+          objekts.push(newObjekt);
         }
 
         // handle como transfer
-        if (result.value.objekt.class === "Special") {
-          const currentCalendars = await handleComo(
-            calendars,
-            ctx,
-            current[metadataIndex],
-            result.value
-          );
-          calendars.push(...currentCalendars);
+        if (result.value.objekt.class !== "Special") continue;
+        const { sender, recipient } = await getCalendars(
+          calendars,
+          ctx,
+          event,
+          result.value
+        );
+        const newCalendars = await handleComo(
+          sender,
+          recipient,
+          event,
+          result.value
+        );
+        if (newCalendars.length > 0) {
+          calendars.push(...newCalendars);
         }
       } else {
-        ctx.log.error(
-          `Unable to fetch metadata for token ${current[metadataIndex].tokenId}`
-        );
+        ctx.log.error(`Unable to fetch metadata for token ${event.tokenId}`);
         continue;
       }
     }
 
     // save entities
-    if (objekts.length) {
-      await ctx.store.save(objekts);
+    if (objekts.length > 0) {
+      await ctx.store.upsert(objekts);
     }
-    if (calendars.length) {
-      await ctx.store.save(calendars);
+    if (calendars.length > 0) {
+      await ctx.store.upsert(calendars);
     }
   }
 });
@@ -107,21 +109,14 @@ async function handleCollection(
  * Upsert the como calendar record for the sender and recipient.
  */
 async function handleComo(
-  buffer: ComoCalendar[],
-  ctx: DataHandlerContext<Store>,
+  sender: ComoCalendar,
+  recipient: ComoCalendar,
   event: TransferEvent,
   metadata: ObjektMetadata
 ) {
   const entities: ComoCalendar[] = [];
   const senderIsMint = matches(event.from, MINT_ADDRESS);
   const recipientIsBurn = matches(event.to, MINT_ADDRESS); // should never happen?
-
-  const { sender, recipient } = await getCalendars(
-    buffer,
-    ctx,
-    event,
-    metadata
-  );
 
   // skip updating the sender calendar upon a new mint
   if (senderIsMint === false) {
