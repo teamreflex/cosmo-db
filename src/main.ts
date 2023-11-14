@@ -9,6 +9,7 @@ import {
 } from "./objekt";
 import { ComoCalendar, Objekt } from "./model";
 import { DataHandlerContext } from "@subsquid/evm-processor";
+import { addr, matches } from "./util";
 
 processor.run(db, async (ctx) => {
   const events: TransferEvent[] = [];
@@ -16,7 +17,7 @@ processor.run(db, async (ctx) => {
   // parse token ids from blocks
   for (let block of ctx.blocks) {
     for (let log of block.logs) {
-      if (!CONTRACTS.includes(log.address.toLowerCase())) continue;
+      if (!CONTRACTS.includes(addr(log.address))) continue;
 
       try {
         events.push(parseEvent(ctx, log));
@@ -65,7 +66,7 @@ processor.run(db, async (ctx) => {
             calendars,
             ctx,
             current[metadataIndex],
-            result.value.objekt.comoAmount
+            result.value
           );
           calendars.push(...currentCalendars);
         }
@@ -109,42 +110,28 @@ async function handleComo(
   buffer: ComoCalendar[],
   ctx: DataHandlerContext<Store>,
   event: TransferEvent,
-  comoAmount: number
+  metadata: ObjektMetadata
 ) {
   const entities: ComoCalendar[] = [];
-  const senderIsMint = event.from === MINT_ADDRESS;
-  const recipientIsBurn = event.to === MINT_ADDRESS; // should never happen?
-  const day = new Date(event.timestamp).getDate();
+  const senderIsMint = matches(event.from, MINT_ADDRESS);
+  const recipientIsBurn = matches(event.to, MINT_ADDRESS); // should never happen?
 
-  let { sender, recipient } = await getExistingCalendars(buffer, ctx, event);
+  const { sender, recipient } = await getCalendars(
+    buffer,
+    ctx,
+    event,
+    metadata
+  );
 
   // skip updating the sender calendar upon a new mint
   if (senderIsMint === false) {
-    if (sender) {
-      sender.amount -= comoAmount;
-    } else {
-      sender = new ComoCalendar({
-        address: event.from,
-        amount: 0,
-        contract: event.contract,
-        day,
-      });
-    }
+    sender.amount -= metadata.objekt.comoAmount;
     entities.push(sender);
   }
 
   // skip updating the recipient calendar upon a burn
   if (recipientIsBurn === false) {
-    if (recipient) {
-      recipient.amount += comoAmount;
-    } else {
-      recipient = new ComoCalendar({
-        address: event.to,
-        amount: comoAmount,
-        contract: event.contract,
-        day,
-      });
-    }
+    recipient.amount += metadata.objekt.comoAmount;
     entities.push(recipient);
   }
 
@@ -173,36 +160,63 @@ async function getExistingObjekt(
 }
 
 /**
- * Pull existing calendar from buffer or db.
+ * Pull existing calendar from buffer/db, or make the entity.
  */
-async function getExistingCalendars(
+async function getCalendars(
   buffer: ComoCalendar[],
   ctx: DataHandlerContext<Store>,
-  event: TransferEvent
+  event: TransferEvent,
+  metadata: ObjektMetadata
 ) {
   const day = new Date(event.timestamp).getDate();
 
+  // check the buffer
   let sender = buffer.find(
     (c) =>
-      c.address === event.from && c.day === day && c.contract === event.contract
+      c.address === event.from &&
+      c.day === day &&
+      matches(c.contract, metadata.objekt.tokenAddress)
   );
+  // check the database
   if (!sender) {
     sender = await ctx.store.findOneBy(ComoCalendar, {
       address: event.from,
       day,
-      contract: event.contract,
+      contract: addr(metadata.objekt.tokenAddress),
+    });
+  }
+  // create if necessary
+  if (!sender) {
+    sender = new ComoCalendar({
+      address: event.from,
+      amount: 0,
+      contract: addr(metadata.objekt.tokenAddress),
+      day,
     });
   }
 
+  // check the buffer
   let recipient = buffer.find(
     (c) =>
-      c.address === event.to && c.day === day && c.contract === event.contract
+      c.address === event.to &&
+      c.day === day &&
+      matches(c.contract, metadata.objekt.tokenAddress)
   );
+  // check the database
   if (!recipient) {
     recipient = await ctx.store.findOneBy(ComoCalendar, {
       address: event.to,
       day,
-      contract: event.contract,
+      contract: addr(metadata.objekt.tokenAddress),
+    });
+  }
+  // create if necessary
+  if (!recipient) {
+    recipient = new ComoCalendar({
+      address: event.to,
+      amount: 0,
+      contract: addr(metadata.objekt.tokenAddress),
+      day,
     });
   }
 

@@ -2,6 +2,7 @@ import { DataHandlerContext } from "@subsquid/evm-processor";
 import { Store } from "./db";
 import * as spec from "./abi/objekt";
 import { Log } from "./processor";
+import { addr } from "./util";
 
 export type TransferEvent = {
   contract: string;
@@ -18,9 +19,9 @@ export function parseEvent(
   if (log.topics[0] === spec.events["Transfer"].topic) {
     const event = spec.events["Transfer"].decode(log);
     return {
-      from: event.from.toLowerCase(),
-      to: event.to.toLowerCase(),
-      contract: log.address.toLowerCase(),
+      from: addr(event.from),
+      to: addr(event.to),
+      contract: addr(log.address),
       tokenId: event.tokenId.toString(),
       timestamp: log.block.timestamp,
     };

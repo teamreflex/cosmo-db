@@ -1,6 +1,7 @@
 import { Objekt } from "./model";
 import "dotenv";
 import { CONTRACT_TRIPLES } from "./constants";
+import { addr, matches } from "./util";
 
 export type ObjektMetadata = {
   name: string;
@@ -28,15 +29,14 @@ export type ObjektMetadata = {
 
 export async function buildObjektEntity(metadata: ObjektMetadata) {
   return new Objekt({
-    contract: metadata.objekt.tokenAddress.toLowerCase(),
+    contract: addr(metadata.objekt.tokenAddress),
     collectionId: metadata.objekt.collectionId,
     season: metadata.objekt.season,
     member: metadata.objekt.member,
     // artists comes back as undefined sometimes
-    artist:
-      metadata.objekt.tokenAddress.toLowerCase() === CONTRACT_TRIPLES
-        ? "tripleS"
-        : "artms",
+    artist: matches(metadata.objekt.tokenAddress, CONTRACT_TRIPLES)
+      ? "tripleS"
+      : "artms",
     collectionNo: metadata.objekt.collectionNo,
     class: metadata.objekt.class,
     frontImage: metadata.objekt.frontImage,
