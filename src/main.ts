@@ -35,12 +35,11 @@ processor.run(db, async (ctx) => {
     const current = events.slice(i, i + PARALLEL_COUNT);
 
     ctx.log.info(`Fetching metadata for ${current.length} tokens`);
-
     const metadata = await Promise.allSettled(
       current.map((e) => fetchMetadataFromCosmo(e.tokenId))
     );
 
-    // act upon each objekt
+    // iterate over each item in the batch
     for (
       let metadataIndex = 0;
       metadataIndex < metadata.length;
@@ -58,19 +57,19 @@ processor.run(db, async (ctx) => {
         }
 
         // handle como transfer
-        if (result.value.objekt.class !== "Special") continue;
-        const newCalendars = await handleComo(
-          ctx,
-          calendars,
-          event,
-          result.value
-        );
-        if (newCalendars.length > 0) {
-          calendars.push(...newCalendars);
+        if (result.value.objekt.class === "Special") {
+          const newCalendars = await handleComo(
+            ctx,
+            calendars,
+            event,
+            result.value
+          );
+          if (newCalendars.length > 0) {
+            calendars.push(...newCalendars);
+          }
         }
       } else {
         ctx.log.error(`Unable to fetch metadata for token ${event.tokenId}`);
-        continue;
       }
     }
 
@@ -191,13 +190,15 @@ async function getCalendar(
   // check the buffer
   let calendar = buffer.find(
     (c) =>
-      c.address === address && c.day === day && matches(c.contract, contract)
+      matches(c.address, address) &&
+      c.day === day &&
+      matches(c.contract, contract)
   );
 
   // check the database
   if (!calendar) {
     calendar = await ctx.store.findOneBy(ComoCalendar, {
-      address: address,
+      address: addr(address),
       day,
       contract: addr(contract),
     });
@@ -206,7 +207,7 @@ async function getCalendar(
   // create if necessary
   if (!calendar) {
     calendar = new ComoCalendar({
-      address: address,
+      address: addr(address),
       amount: 0,
       contract: addr(contract),
       day,
