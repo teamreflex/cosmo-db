@@ -118,7 +118,7 @@ async function handleComo(
       buffer,
       ctx,
       day,
-      addr(event.from),
+      addr(event.to),
       addr(metadata.objekt.tokenAddress)
     );
     calendar.amount += metadata.objekt.comoAmount;
