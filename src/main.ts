@@ -66,6 +66,7 @@ processor.run(db, async (ctx) => {
           result.value
         );
         const newCalendars = await handleComo(
+          ctx,
           sender,
           recipient,
           event,
@@ -109,6 +110,7 @@ async function handleCollection(
  * Upsert the como calendar record for the sender and recipient.
  */
 async function handleComo(
+  ctx: DataHandlerContext<Store>,
   sender: ComoCalendar,
   recipient: ComoCalendar,
   event: TransferEvent,
@@ -122,12 +124,18 @@ async function handleComo(
   if (senderIsMint === false) {
     sender.amount -= metadata.objekt.comoAmount;
     entities.push(sender);
+    ctx.log.info(
+      `Decrementing sender calendar by ${metadata.objekt.comoAmount} for ${metadata.objekt.collectionId}`
+    );
   }
 
   // skip updating the recipient calendar upon a burn
   if (recipientIsBurn === false) {
     recipient.amount += metadata.objekt.comoAmount;
     entities.push(recipient);
+    ctx.log.info(
+      `Incrementing recipient calendar by ${metadata.objekt.comoAmount} for ${metadata.objekt.collectionId}`
+    );
   }
 
   return entities;
