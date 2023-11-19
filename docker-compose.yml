@@ -17,8 +17,8 @@ services:
     image: apollo-objekts
     environment:
       - DB_NAME
-      - DB_PORT
-      - DB_HOST
+      - DB_PORT=5432
+      - DB_HOST=db
       - DB_PASS
       - GQL_PORT
     ports:
@@ -31,8 +31,8 @@ services:
     restart: always
     environment:
       - DB_NAME
-      - DB_PORT
-      - DB_HOST
+      - DB_PORT=5432
+      - DB_HOST=db
       - DB_PASS
       - REDIS_HOST
       - REDIS_PORT

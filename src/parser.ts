@@ -10,17 +10,20 @@ export type TransferEvent = {
   timestamp: number;
 };
 
-export function parseEvent(log: Log): TransferEvent {
-  if (log.topics[0] === spec.events["Transfer"].topic) {
-    const event = spec.events["Transfer"].decode(log);
-    return {
-      from: addr(event.from),
-      to: addr(event.to),
-      contract: addr(log.address),
-      tokenId: event.tokenId.toString(),
-      timestamp: log.block.timestamp,
-    };
+export function parseEvent(log: Log): TransferEvent | undefined {
+  try {
+    if (log.topics[0] === spec.events["Transfer"].topic) {
+      const event = spec.events["Transfer"].decode(log);
+      return {
+        from: addr(event.from),
+        to: addr(event.to),
+        contract: addr(log.address),
+        tokenId: event.tokenId.toString(),
+        timestamp: log.block.timestamp,
+      };
+    }
+    return undefined;
+  } catch (err) {
+    return undefined;
   }
-
-  throw new Error(`Unknown event "${log.topics[0]}"`);
 }

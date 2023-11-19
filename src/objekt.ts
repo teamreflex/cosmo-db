@@ -1,8 +1,3 @@
-import { Objekt } from "./model";
-import "dotenv";
-import { CONTRACT_TRIPLES } from "./constants";
-import { addr, matches } from "./util";
-
 export type ObjektMetadata = {
   name: string;
   description: string;
@@ -23,32 +18,10 @@ export type ObjektMetadata = {
     textColor: string;
     comoAmount: number;
     tokenId: string;
+    objektNo: number;
     tokenAddress: string;
   };
 };
-
-export async function buildObjektEntity(metadata: ObjektMetadata) {
-  return new Objekt({
-    contract: addr(metadata.objekt.tokenAddress),
-    collectionId: metadata.objekt.collectionId,
-    season: metadata.objekt.season,
-    member: metadata.objekt.member,
-    // artists comes back as undefined sometimes
-    artist: matches(metadata.objekt.tokenAddress, CONTRACT_TRIPLES)
-      ? "tripleS"
-      : "artms",
-    collectionNo: metadata.objekt.collectionNo,
-    class: metadata.objekt.class,
-    frontImage: metadata.objekt.frontImage,
-    backImage: metadata.objekt.backImage,
-    backgroundColor: metadata.objekt.backgroundColor,
-    textColor: metadata.objekt.textColor,
-    comoAmount: metadata.objekt.comoAmount,
-    onOffline: metadata.objekt.collectionNo.includes("Z")
-      ? "online"
-      : "offline",
-  });
-}
 
 export async function fetchMetadataFromCosmo(
   tokenId: string,
