@@ -14,7 +14,9 @@ services:
       # Uncomment for logging all SQL statements
       # command: ["postgres", "-c", "log_statement=all"]
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: squid.Dockerfile
     environment:
       - DB_NAME
       - DB_PORT=5432
@@ -27,16 +29,31 @@ services:
     depends_on:
       - db
   processor:
-    build: .
+    build:
+      context: .
+      dockerfile: squid.Dockerfile
     restart: always
     environment:
       - DB_NAME
       - DB_PORT=5432
       - DB_HOST=db
       - DB_PASS
-      - REDIS_HOST
-      - REDIS_PORT
     command: ["sqd", "process:prod"]
+    depends_on:
+      - db
+  proxy:
+    build:
+      context: .
+      dockerfile: proxy.Dockerfile
+    restart: always
+    environment:
+      - DB_NAME
+      - DB_PORT=5432
+      - DB_HOST=db
+      - DB_PASS
+      - PROXY_PORT
+    ports:
+      - "${PROXY_PORT}:${PROXY_PORT}"
     depends_on:
       - db
 volumes:
