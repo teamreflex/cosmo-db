@@ -14,7 +14,7 @@ services:
       # Uncomment for logging all SQL statements
       # command: ["postgres", "-c", "log_statement=all"]
   api:
-    image: apollo-objekts
+    build: .
     environment:
       - DB_NAME
       - DB_PORT=5432
@@ -27,7 +27,7 @@ services:
     depends_on:
       - db
   processor:
-    image: apollo-objekts
+    build: .
     restart: always
     environment:
       - DB_NAME
@@ -39,22 +39,6 @@ services:
     command: ["sqd", "process:prod"]
     depends_on:
       - db
-      - cache
-  cache:
-    image: redis:7.2-alpine
-    depends_on:
-      - db
-    restart: always
-    environment:
-      - REDIS_PORT
-      - REDIS_PASSWORD
-    ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
-    command: redis-server --save 60 100 --appendonly yes --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - cache:/data
 volumes:
   db:
-    driver: local
-  cache:
     driver: local
