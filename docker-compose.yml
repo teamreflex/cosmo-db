@@ -8,17 +8,17 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PASSWORD=${DB_PASS}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
       # Uncomment for logging all SQL statements
       # command: ["postgres", "-c", "log_statement=all"]
   api:
     image: apollo-objekts
     environment:
       - DB_NAME
-      - DB_PORT=5432
-      - DB_HOST=db
+      - DB_PORT
+      - DB_HOST
       - DB_PASS
       - GQL_PORT
     ports:
@@ -31,13 +31,30 @@ services:
     restart: always
     environment:
       - DB_NAME
-      - DB_PORT=5432
-      - DB_HOST=db
+      - DB_PORT
+      - DB_HOST
       - DB_PASS
-      - ALCHEMY_KEY
-    ports:
-      # prometheus metrics exposed at port 3000
-      - "3000:3000"
+      - REDIS_HOST
+      - REDIS_PORT
     command: ["sqd", "process:prod"]
     depends_on:
       - db
+      - cache
+  cache:
+    image: redis:7.2-alpine
+    depends_on:
+      - db
+    restart: always
+    environment:
+      - REDIS_PORT
+      - REDIS_PASSWORD
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    command: redis-server --save 60 100 --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - cache:/data
+volumes:
+  db:
+    driver: local
+  cache:
+    driver: local
