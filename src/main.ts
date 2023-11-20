@@ -40,12 +40,17 @@ processor.run(db, async (ctx) => {
     for (let j = 0; j < metadataBatch.length; j++) {
       const request = metadataBatch[j];
       const currentTransfer = current[j];
-      if (request.status === "rejected") {
+      if (
+        request.status === "rejected" ||
+        !request.value ||
+        !request.value.objekt
+      ) {
         ctx.log.error(
           `Unable to fetch metadata for token ${currentTransfer.tokenId}`
         );
         continue;
       }
+
       const objektMetadata = request.value.objekt;
 
       // pull existing objekt out from db
