@@ -1,9 +1,9 @@
 type Objekt @entity {
   id: ID! @index
   contract: String! @index
-  timestamp: BigInt! @index
+  timestamp: DateTime!
   # objekt fields
-  collectionId: String! @index
+  collectionId: String! @index @unique
   season: String! @index
   member: String! @index
   artist: String! @index
@@ -15,12 +15,14 @@ type Objekt @entity {
   textColor: String!
   comoAmount: Int!
   onOffline: String! @index
+  transfers: [Transfer!] @derivedFrom(field: "objekt")
 }
 
-type ComoCalendar @entity {
+type Transfer @entity {
   id: ID! @index
-  contract: String! @index
-  address: String! @index
-  day: Int! @index
-  amount: Int!
+  from: String! @index
+  to: String! @index
+  timestamp: DateTime!
+  tokenId: String!
+  objekt: Objekt!
 }

@@ -1,2 +1,2 @@
 export * from "./objekt.model";
-export * from "./como-calendar.model";
+export * from "./transfer.model";
