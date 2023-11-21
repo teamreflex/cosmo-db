@@ -9,7 +9,6 @@ $ git clone git@github.com:teamreflex/cosmo-db.git
 $ cd cosmo-db
 $ npm ci
 $ cp .env.example .env
-$ ./setup.sh
 $ docker compose up -d
 ```
 
