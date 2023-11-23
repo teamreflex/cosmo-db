@@ -6,6 +6,7 @@ import {
   ManyToOne as ManyToOne_,
 } from "typeorm";
 import { Objekt } from "./objekt.model";
+import { Collection } from "./collection.model";
 
 @Entity_()
 export class Transfer {
@@ -24,7 +25,7 @@ export class Transfer {
   @Column_("text", { nullable: false })
   to!: string;
 
-  @Column_("timestamp", { nullable: false })
+  @Column_("timestamp with time zone", { nullable: false })
   timestamp!: Date;
 
   @Column_("text", { nullable: false })
@@ -33,4 +34,8 @@ export class Transfer {
   @Index_()
   @ManyToOne_(() => Objekt, { nullable: true })
   objekt!: Objekt;
+
+  @Index_()
+  @ManyToOne_(() => Collection, { nullable: true })
+  collection!: Collection;
 }

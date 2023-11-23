@@ -4,8 +4,10 @@ import {
   PrimaryColumn as PrimaryColumn_,
   Index as Index_,
   OneToMany as OneToMany_,
+  ManyToOne as ManyToOne_,
 } from "typeorm";
 import { Transfer } from "./transfer.model";
+import { Collection } from "./collection.model";
 
 @Entity_()
 export class Objekt {
@@ -18,54 +20,21 @@ export class Objekt {
 
   @Index_()
   @Column_("text", { nullable: false })
-  contract!: string;
+  owner!: string;
 
-  @Column_("timestamp", { nullable: false })
-  timestamp!: Date;
+  @Column_("timestamp with time zone", { nullable: false })
+  mintedAt!: Date;
 
-  @Index_({ unique: true })
-  @Column_("text", { nullable: false })
-  collectionId!: string;
-
-  @Index_()
-  @Column_("text", { nullable: false })
-  season!: string;
-
-  @Index_()
-  @Column_("text", { nullable: false })
-  member!: string;
-
-  @Index_()
-  @Column_("text", { nullable: false })
-  artist!: string;
-
-  @Index_()
-  @Column_("text", { nullable: false })
-  collectionNo!: string;
-
-  @Index_()
-  @Column_("text", { nullable: false })
-  class!: string;
-
-  @Column_("text", { nullable: false })
-  frontImage!: string;
-
-  @Column_("text", { nullable: false })
-  backImage!: string;
-
-  @Column_("text", { nullable: false })
-  backgroundColor!: string;
-
-  @Column_("text", { nullable: false })
-  textColor!: string;
+  @Column_("timestamp with time zone", { nullable: false })
+  receivedAt!: Date;
 
   @Column_("int4", { nullable: false })
-  comoAmount!: number;
-
-  @Index_()
-  @Column_("text", { nullable: false })
-  onOffline!: string;
+  serial!: number;
 
   @OneToMany_(() => Transfer, (e) => e.objekt)
   transfers!: Transfer[];
+
+  @Index_()
+  @ManyToOne_(() => Collection, { nullable: true })
+  collection!: Collection;
 }

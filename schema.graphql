@@ -1,7 +1,7 @@
-type Objekt @entity {
-  id: ID! @index
+type Collection @entity {
+  id: ID! @index # uuid
   contract: String! @index
-  timestamp: DateTime!
+  createdAt: DateTime!
   # objekt fields
   collectionId: String! @index @unique
   season: String! @index
@@ -15,14 +15,26 @@ type Objekt @entity {
   textColor: String!
   comoAmount: Int!
   onOffline: String! @index
-  transfers: [Transfer!] @derivedFrom(field: "objekt")
+  transfers: [Transfer!] @derivedFrom(field: "collection")
+  objekts: [Objekt!] @derivedFrom(field: "collection")
 }
 
 type Transfer @entity {
-  id: ID! @index
+  id: ID! @index # uuid
   from: String! @index
   to: String! @index
   timestamp: DateTime!
   tokenId: String!
   objekt: Objekt!
+  collection: Collection!
+}
+
+type Objekt @entity {
+  id: ID! @index # tokenId
+  owner: String! @index
+  mintedAt: DateTime!
+  receivedAt: DateTime!
+  serial: Int!
+  transfers: [Transfer!] @derivedFrom(field: "objekt")
+  collection: Collection!
 }
