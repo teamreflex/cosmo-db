@@ -117,21 +117,23 @@ async function handleCollection(
       contract: addr(metadata.objekt.tokenAddress),
       createdAt: new Date(transfer.timestamp),
       collectionId: metadata.objekt.collectionId,
-      season: metadata.objekt.season,
-      member: metadata.objekt.member,
-      artist: metadata.objekt.artists[0],
-      collectionNo: metadata.objekt.collectionNo,
-      class: metadata.objekt.class,
-      frontImage: metadata.objekt.frontImage,
-      backImage: metadata.objekt.backImage,
-      backgroundColor: metadata.objekt.backgroundColor,
-      textColor: metadata.objekt.textColor,
-      comoAmount: metadata.objekt.comoAmount,
-      onOffline: metadata.objekt.collectionNo.includes("Z")
-        ? "online"
-        : "offline",
     });
   }
+
+  // set and/or update metadata
+  collection.season = metadata.objekt.season;
+  collection.member = metadata.objekt.member;
+  collection.artist = metadata.objekt.artists[0];
+  collection.collectionNo = metadata.objekt.collectionNo;
+  collection.class = metadata.objekt.class;
+  collection.comoAmount = metadata.objekt.comoAmount;
+  collection.onOffline = metadata.objekt.collectionNo.includes("Z")
+    ? "online"
+    : "offline";
+  collection.frontImage = metadata.objekt.frontImage;
+  collection.backImage = metadata.objekt.backImage;
+  collection.backgroundColor = metadata.objekt.backgroundColor;
+  collection.textColor = metadata.objekt.textColor;
 
   return collection;
 }
