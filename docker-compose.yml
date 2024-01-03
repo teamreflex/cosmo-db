@@ -38,6 +38,8 @@ services:
       - DB_PORT=5432
       - DB_HOST=db
       - DB_PASS
+      - DB_READ_USER
+      - DB_READ_PASS
     command: ["sqd", "process:prod"]
     depends_on:
       - db

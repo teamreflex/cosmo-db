@@ -1,8 +1,8 @@
 import "@total-typescript/ts-reset/filter-boolean";
 import { processor } from "./processor";
 import { Store, db } from "./db";
-import { CONTRACTS, PARALLEL_COUNT } from "./constants";
-import { parseEvent } from "./parser";
+import { PARALLEL_COUNT } from "./constants";
+import { TransferabilityUpdate, parseBlocks } from "./parser";
 import { ObjektMetadata, fetchMetadataFromCosmo } from "./objekt";
 import { Collection, Objekt, Transfer } from "./model";
 import { addr } from "./util";
@@ -10,21 +10,7 @@ import { v4 } from "uuid";
 import { DataHandlerContext } from "@subsquid/evm-processor";
 
 processor.run(db, async (ctx) => {
-  const transferBuffer = ctx.blocks
-    .flatMap((block) => block.logs)
-    .filter((log) => CONTRACTS.includes(addr(log.address)))
-    .map(parseEvent)
-    .filter(Boolean)
-    .map(
-      (event) =>
-        new Transfer({
-          id: v4(),
-          from: event.from,
-          to: event.to,
-          timestamp: new Date(event.timestamp),
-          tokenId: event.tokenId,
-        })
-    );
+  const { transferBuffer, transferabilityBuffer } = parseBlocks(ctx.blocks);
 
   // chunk everything into batches
   for (let i = 0; i < transferBuffer.length; i += PARALLEL_COUNT) {
@@ -60,7 +46,7 @@ processor.run(db, async (ctx) => {
         collectionBatch,
         currentTransfer
       );
-      collectionBatch.set(collection.collectionId, collection);
+      collectionBatch.set(collection.slug, collection);
 
       // handle objekt
       const objekt = await handleObjekt(
@@ -90,6 +76,20 @@ processor.run(db, async (ctx) => {
   if (transferBuffer.length > 0) {
     await ctx.store.upsert(transferBuffer);
   }
+
+  // update objekt transferability after transfers are done
+  const pendingUpdates = new Map<string, Objekt>();
+  for (const update of transferabilityBuffer) {
+    const objekt = await handleTransferability(ctx, pendingUpdates, update);
+
+    if (objekt) {
+      pendingUpdates.set(objekt.id, objekt);
+    }
+  }
+
+  if (pendingUpdates.size > 0) {
+    await ctx.store.upsert(Array.from(pendingUpdates.values()));
+  }
 });
 
 async function handleCollection(
@@ -98,16 +98,16 @@ async function handleCollection(
   buffer: Map<string, Collection>,
   transfer: Transfer
 ) {
+  const slug = metadata.objekt.collectionId.toLowerCase().replace(" ", "-");
+
   // fetch from db
   let collection = await ctx.store.get(Collection, {
-    where: {
-      collectionId: metadata.objekt.collectionId,
-    },
+    where: { slug },
   });
 
   // fetch out of buffer
   if (!collection) {
-    collection = buffer.get(metadata.objekt.collectionId);
+    collection = buffer.get(slug);
   }
 
   // create
@@ -117,6 +117,7 @@ async function handleCollection(
       contract: addr(metadata.objekt.tokenAddress),
       createdAt: new Date(transfer.timestamp),
       collectionId: metadata.objekt.collectionId,
+      slug,
     });
   }
 
@@ -130,10 +131,12 @@ async function handleCollection(
   collection.onOffline = metadata.objekt.collectionNo.includes("Z")
     ? "online"
     : "offline";
+  collection.thumbnailImage = metadata.objekt.thumbnailImage;
   collection.frontImage = metadata.objekt.frontImage;
   collection.backImage = metadata.objekt.backImage;
   collection.backgroundColor = metadata.objekt.backgroundColor;
   collection.textColor = metadata.objekt.textColor;
+  collection.accentColor = metadata.objekt.accentColor;
 
   return collection;
 }
@@ -167,8 +170,29 @@ async function handleObjekt(
       receivedAt: new Date(transfer.timestamp),
       owner: addr(transfer.to),
       serial: metadata.objekt.objektNo,
+      transferable: metadata.objekt.transferable,
     });
   }
 
+  return objekt;
+}
+
+async function handleTransferability(
+  ctx: DataHandlerContext<Store>,
+  buffer: Map<string, Objekt>,
+  update: TransferabilityUpdate
+) {
+  // fetch from db
+  let objekt = await ctx.store.get(Objekt, update.tokenId);
+
+  // fetch out of buffer
+  if (!objekt) {
+    objekt = buffer.get(update.tokenId);
+  }
+
+  // shouldn't happen but oh well?
+  if (!objekt) return undefined;
+
+  objekt.transferable = update.transferable;
   return objekt;
 }

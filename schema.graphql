@@ -2,6 +2,7 @@ type Collection @entity {
   id: ID! @index # uuid
   contract: String! @index
   createdAt: DateTime!
+  slug: String! @index @unique
   # objekt fields
   collectionId: String! @index @unique
   season: String! @index
@@ -9,10 +10,12 @@ type Collection @entity {
   artist: String! @index
   collectionNo: String! @index
   class: String! @index
+  thumbnailImage: String!
   frontImage: String!
   backImage: String!
   backgroundColor: String!
   textColor: String!
+  accentColor: String!
   comoAmount: Int!
   onOffline: String! @index
   transfers: [Transfer!] @derivedFrom(field: "collection")
@@ -35,6 +38,7 @@ type Objekt @entity {
   mintedAt: DateTime!
   receivedAt: DateTime!
   serial: Int!
+  transferable: Boolean!
   transfers: [Transfer!] @derivedFrom(field: "objekt")
   collection: Collection!
 }

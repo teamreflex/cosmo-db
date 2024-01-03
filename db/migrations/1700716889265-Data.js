@@ -3,7 +3,7 @@ module.exports = class Data1700716889265 {
 
   async up(db) {
     await db.query(
-      `CREATE TABLE "objekt" ("id" character varying NOT NULL, "owner" text NOT NULL, "minted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "received_at" TIMESTAMP WITH TIME ZONE NOT NULL, "serial" integer NOT NULL, "collection_id" character varying, CONSTRAINT "PK_a50fda223abd7f6ae55f2cf629f" PRIMARY KEY ("id"))`
+      `CREATE TABLE "objekt" ("id" character varying NOT NULL, "owner" text NOT NULL, "minted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "received_at" TIMESTAMP WITH TIME ZONE NOT NULL, "serial" integer NOT NULL, "collection_id" character varying, "transferable" boolean NOT NULL, CONSTRAINT "PK_a50fda223abd7f6ae55f2cf629f" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_d2ddf18405b46538e169ab03e8" ON "objekt" ("owner") `
@@ -27,13 +27,16 @@ module.exports = class Data1700716889265 {
       `CREATE INDEX "IDX_15a8d2966ae7e5e9b2ff47104f" ON "transfer" ("collection_id") `
     );
     await db.query(
-      `CREATE TABLE "collection" ("id" character varying NOT NULL, "contract" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "collection_id" text NOT NULL, "season" text NOT NULL, "member" text NOT NULL, "artist" text NOT NULL, "collection_no" text NOT NULL, "class" text NOT NULL, "front_image" text NOT NULL, "back_image" text NOT NULL, "background_color" text NOT NULL, "text_color" text NOT NULL, "como_amount" integer NOT NULL, "on_offline" text NOT NULL, CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85" PRIMARY KEY ("id"))`
+      `CREATE TABLE "collection" ("id" character varying NOT NULL, "contract" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "collection_id" text NOT NULL, "slug" text NOT NULL, "season" text NOT NULL, "member" text NOT NULL, "artist" text NOT NULL, "collection_no" text NOT NULL, "class" text NOT NULL, "thumbnail_image" text NOT NULL, "front_image" text NOT NULL, "back_image" text NOT NULL, "background_color" text NOT NULL, "text_color" text NOT NULL, "accent_color" text NOT NULL, "como_amount" integer NOT NULL, "on_offline" text NOT NULL, CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_e814aff6539600dfcc88af41fc" ON "collection" ("contract") `
     );
     await db.query(
       `CREATE UNIQUE INDEX "IDX_f7f39206eb394d7d788699c600" ON "collection" ("collection_id") `
+    );
+    await db.query(
+      `CREATE UNIQUE INDEX "IDX_59d3582ace0acfe617279f50f5" ON "collection" ("slug") `
     );
     await db.query(
       `CREATE INDEX "IDX_81f585f60e03d2dc803d8a4945" ON "collection" ("season") `
@@ -76,6 +79,7 @@ module.exports = class Data1700716889265 {
     await db.query(`DROP TABLE "collection"`);
     await db.query(`DROP INDEX "public"."IDX_e814aff6539600dfcc88af41fc"`);
     await db.query(`DROP INDEX "public"."IDX_f7f39206eb394d7d788699c600"`);
+    await db.query(`DROP INDEX "public"."IDX_59d3582ace0acfe617279f50f5"`);
     await db.query(`DROP INDEX "public"."IDX_81f585f60e03d2dc803d8a4945"`);
     await db.query(`DROP INDEX "public"."IDX_76242b6e82adf6f4ab4b388858"`);
     await db.query(`DROP INDEX "public"."IDX_6f89ec57ebbfd978e196751051"`);

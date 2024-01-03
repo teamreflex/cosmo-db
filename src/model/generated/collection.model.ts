@@ -28,6 +28,10 @@ export class Collection {
   @Column_("text", { nullable: false })
   collectionId!: string;
 
+  @Index_({ unique: true })
+  @Column_("text", { nullable: false })
+  slug!: string;
+
   @Index_()
   @Column_("text", { nullable: false })
   season!: string;
@@ -49,6 +53,9 @@ export class Collection {
   class!: string;
 
   @Column_("text", { nullable: false })
+  thumbnailImage!: string;
+
+  @Column_("text", { nullable: false })
   frontImage!: string;
 
   @Column_("text", { nullable: false })
@@ -59,6 +66,9 @@ export class Collection {
 
   @Column_("text", { nullable: false })
   textColor!: string;
+
+  @Column_("text", { nullable: false })
+  accentColor!: string;
 
   @Column_("int4", { nullable: false })
   comoAmount!: number;
