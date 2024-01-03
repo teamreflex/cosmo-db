@@ -47,6 +47,9 @@ export const processor = new EvmBatchProcessor()
   .addTransaction({
     to: [CONTRACT_ARTMS],
     sighash: [contractAbi.functions.batchUpdateObjektTransferrability.sighash],
+    range: {
+      from: START_ARTMS,
+    },
   })
   // triples objekts
   .addLog({
@@ -60,6 +63,9 @@ export const processor = new EvmBatchProcessor()
   .addTransaction({
     to: [CONTRACT_TRIPLES],
     sighash: [contractAbi.functions.batchUpdateObjektTransferrability.sighash],
+    range: {
+      from: START_TRIPLES,
+    },
   });
 
 export type Fields = EvmBatchProcessorFields<typeof processor>;
