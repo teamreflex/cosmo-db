@@ -33,10 +33,7 @@ module.exports = class Data1700716889265 {
       `CREATE INDEX "IDX_e814aff6539600dfcc88af41fc" ON "collection" ("contract") `
     );
     await db.query(
-      `CREATE UNIQUE INDEX "IDX_f7f39206eb394d7d788699c600" ON "collection" ("collection_id") `
-    );
-    await db.query(
-      `CREATE UNIQUE INDEX "IDX_59d3582ace0acfe617279f50f5" ON "collection" ("slug") `
+      `CREATE UNIQUE INDEX "IDX_f7f39206eb394d7d788699c600" ON "collection" ("slug") `
     );
     await db.query(
       `CREATE INDEX "IDX_81f585f60e03d2dc803d8a4945" ON "collection" ("season") `
@@ -79,7 +76,6 @@ module.exports = class Data1700716889265 {
     await db.query(`DROP TABLE "collection"`);
     await db.query(`DROP INDEX "public"."IDX_e814aff6539600dfcc88af41fc"`);
     await db.query(`DROP INDEX "public"."IDX_f7f39206eb394d7d788699c600"`);
-    await db.query(`DROP INDEX "public"."IDX_59d3582ace0acfe617279f50f5"`);
     await db.query(`DROP INDEX "public"."IDX_81f585f60e03d2dc803d8a4945"`);
     await db.query(`DROP INDEX "public"."IDX_76242b6e82adf6f4ab4b388858"`);
     await db.query(`DROP INDEX "public"."IDX_6f89ec57ebbfd978e196751051"`);

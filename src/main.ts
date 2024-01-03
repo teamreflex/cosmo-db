@@ -98,16 +98,19 @@ async function handleCollection(
   buffer: Map<string, Collection>,
   transfer: Transfer
 ) {
-  const slug = metadata.objekt.collectionId.toLowerCase().replace(" ", "-");
-
-  // fetch from db
-  let collection = await ctx.store.get(Collection, {
-    where: { slug },
-  });
+  const slug = metadata.objekt.collectionId
+    .toLowerCase()
+    .trim() // just in case
+    .replace(/ /g, "-");
 
   // fetch out of buffer
+  let collection = buffer.get(slug);
+
+  // fetch from db
   if (!collection) {
-    collection = buffer.get(slug);
+    collection = await ctx.store.get(Collection, {
+      where: { slug },
+    });
   }
 
   // create

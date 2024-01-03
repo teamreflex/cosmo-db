@@ -24,7 +24,6 @@ export class Collection {
   @Column_("timestamp with time zone", { nullable: false })
   createdAt!: Date;
 
-  @Index_({ unique: true })
   @Column_("text", { nullable: false })
   collectionId!: string;
 
