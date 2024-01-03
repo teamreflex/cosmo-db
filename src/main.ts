@@ -64,31 +64,28 @@ processor.run(db, async (ctx) => {
       transferBatch.push(currentTransfer);
     }
 
+    // upsert collections
     if (collectionBatch.size > 0) {
       await ctx.store.upsert(Array.from(collectionBatch.values()));
     }
 
+    // update objekt transferability
+    for (const update of transferabilityBuffer) {
+      const objekt = await handleTransferability(ctx, objektBatch, update);
+      if (objekt) {
+        objektBatch.set(objekt.id, objekt);
+      }
+    }
+
+    // upsert objekts
     if (objektBatch.size > 0) {
       await ctx.store.upsert(Array.from(objektBatch.values()));
     }
   }
 
+  // upsert transfers
   if (transferBuffer.length > 0) {
     await ctx.store.upsert(transferBuffer);
-  }
-
-  // update objekt transferability after transfers are done
-  const pendingUpdates = new Map<string, Objekt>();
-  for (const update of transferabilityBuffer) {
-    const objekt = await handleTransferability(ctx, pendingUpdates, update);
-
-    if (objekt) {
-      pendingUpdates.set(objekt.id, objekt);
-    }
-  }
-
-  if (pendingUpdates.size > 0) {
-    await ctx.store.upsert(Array.from(pendingUpdates.values()));
   }
 });
 
@@ -150,12 +147,12 @@ async function handleObjekt(
   buffer: Map<string, Objekt>,
   transfer: Transfer
 ) {
-  // fetch from db
-  let objekt = await ctx.store.get(Objekt, transfer.tokenId);
-
   // fetch out of buffer
+  let objekt = buffer.get(transfer.tokenId);
+  // fetch from db
+
   if (!objekt) {
-    objekt = buffer.get(transfer.tokenId);
+    objekt = await ctx.store.get(Objekt, transfer.tokenId);
   }
 
   // if not new, update fields
@@ -185,12 +182,12 @@ async function handleTransferability(
   buffer: Map<string, Objekt>,
   update: TransferabilityUpdate
 ) {
-  // fetch from db
-  let objekt = await ctx.store.get(Objekt, update.tokenId);
-
   // fetch out of buffer
+  let objekt = buffer.get(update.tokenId);
+
+  // fetch from db
   if (!objekt) {
-    objekt = buffer.get(update.tokenId);
+    objekt = await ctx.store.get(Objekt, update.tokenId);
   }
 
   // shouldn't happen but oh well?
