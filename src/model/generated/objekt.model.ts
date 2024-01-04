@@ -31,6 +31,9 @@ export class Objekt {
   @Column_("int4", { nullable: false })
   serial!: number;
 
+  @Column_("boolean", { nullable: false })
+  transferable!: boolean;
+
   @OneToMany_(() => Transfer, (e) => e.objekt)
   transfers!: Transfer[];
 

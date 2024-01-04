@@ -20,6 +20,7 @@ export type ObjektMetadata = {
     tokenId: string;
     objektNo: number;
     tokenAddress: string;
+    transferable: boolean;
   };
 };
 
