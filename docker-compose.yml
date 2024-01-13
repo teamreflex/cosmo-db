@@ -7,7 +7,6 @@ services:
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PASSWORD=${DB_PASS}
-      - POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256"
     ports:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
