@@ -1,8 +1,8 @@
 import "@total-typescript/ts-reset/filter-boolean";
 import { processor } from "./processor";
 import { Store, db } from "./db";
-import { CONTRACTS, PARALLEL_COUNT } from "./constants";
-import { parseEvent } from "./parser";
+import { PARALLEL_COUNT } from "./constants";
+import { parseBlocks } from "./parser";
 import { ObjektMetadata, fetchMetadataFromCosmo } from "./objekt";
 import { Collection, Objekt, Transfer } from "./model";
 import { addr } from "./util";
@@ -10,22 +10,7 @@ import { v4 } from "uuid";
 import { DataHandlerContext } from "@subsquid/evm-processor";
 
 processor.run(db, async (ctx) => {
-  const transferBuffer = ctx.blocks
-    .flatMap((block) => block.logs)
-    .filter((log) => CONTRACTS.includes(addr(log.address)))
-    .map(parseEvent)
-    .filter(Boolean)
-    .map(
-      (event) =>
-        new Transfer({
-          id: v4(),
-          from: event.from,
-          to: event.to,
-          timestamp: new Date(event.timestamp),
-          tokenId: event.tokenId,
-          hash: event.hash,
-        })
-    );
+  const { transferBuffer, transferabilityBuffer } = parseBlocks(ctx.blocks);
 
   // chunk everything into batches
   for (let i = 0; i < transferBuffer.length; i += PARALLEL_COUNT) {

@@ -31,6 +31,7 @@ export const processor = new EvmBatchProcessor()
       from: true,
       value: true,
       status: true,
+      sighash: true,
     },
   })
   .setFinalityConfirmation(200)
