@@ -1,3 +1,5 @@
+import { ofetch } from "ofetch";
+
 export type ObjektMetadata = {
   name: string;
   description: string;
@@ -24,20 +26,16 @@ export type ObjektMetadata = {
   };
 };
 
-export async function fetchMetadataFromCosmo(
-  tokenId: string,
-  retryCount = 0,
-  maxRetries = 3
-) {
-  try {
-    const res = await fetch(
-      `https://api.cosmo.fans/objekt/v1/token/${tokenId}`
-    );
-    return (await res.json()) as ObjektMetadata;
-  } catch (err) {
-    if (retryCount < maxRetries) {
-      return fetchMetadataFromCosmo(tokenId, retryCount + 1, maxRetries);
+/**
+ * Fetch token metadata from Cosmo with retries.
+ * Retries on codes that may have valid responses, but not 404.
+ */
+export async function fetchMetadataFromCosmo(tokenId: string) {
+  return await ofetch<ObjektMetadata>(
+    `https://api.cosmo.fans/objekt/v1/token/${tokenId}`,
+    {
+      retry: 5,
+      retryDelay: 250, // 250ms backoff
     }
-    throw err;
-  }
+  );
 }
