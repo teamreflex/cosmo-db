@@ -26,6 +26,9 @@ export class Collection {
 
   @Index_({ unique: true })
   @Column_("text", { nullable: false })
+  slug!: string;
+
+  @Column_("text", { nullable: false })
   collectionId!: string;
 
   @Index_()

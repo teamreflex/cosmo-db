@@ -53,6 +53,7 @@ module.exports = class Data1700716889265 {
         "id" character varying NOT NULL,
         "contract" text NOT NULL,
         "created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "slug" text NOT NULL,
         "collection_id" text NOT NULL,
         "season" text NOT NULL,
         "member" text NOT NULL,
@@ -75,7 +76,7 @@ module.exports = class Data1700716889265 {
       `CREATE INDEX "IDX_e814aff6539600dfcc88af41fc" ON "collection" ("contract") `
     );
     await db.query(
-      `CREATE UNIQUE INDEX "IDX_f7f39206eb394d7d788699c600" ON "collection" ("collection_id") `
+      `CREATE UNIQUE INDEX "IDX_f7f39206eb394d7d788699c600" ON "collection" ("slug") `
     );
     await db.query(
       `CREATE INDEX "IDX_81f585f60e03d2dc803d8a4945" ON "collection" ("season") `

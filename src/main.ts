@@ -61,7 +61,7 @@ processor.run(db, async (ctx) => {
         collectionBatch,
         currentTransfer
       );
-      collectionBatch.set(collection.collectionId, collection);
+      collectionBatch.set(collection.slug, collection);
 
       // handle objekt
       const objekt = await handleObjekt(
@@ -102,16 +102,18 @@ async function handleCollection(
   buffer: Map<string, Collection>,
   transfer: Transfer
 ) {
+  const slug = metadata.objekt.collectionId.replace(/ /g, "-").toLowerCase();
+
   // fetch from db
   let collection = await ctx.store.get(Collection, {
     where: {
-      collectionId: metadata.objekt.collectionId,
+      slug: slug,
     },
   });
 
   // fetch out of buffer
   if (!collection) {
-    collection = buffer.get(metadata.objekt.collectionId);
+    collection = buffer.get(slug);
   }
 
   // create
@@ -121,6 +123,7 @@ async function handleCollection(
       contract: addr(metadata.objekt.tokenAddress),
       createdAt: new Date(transfer.timestamp),
       collectionId: metadata.objekt.collectionId,
+      slug: slug,
     });
   }
 

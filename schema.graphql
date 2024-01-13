@@ -2,8 +2,9 @@ type Collection @entity {
   id: ID! @index # uuid
   contract: String! @index
   createdAt: DateTime!
+  slug: String! @index @unique
   # objekt fields
-  collectionId: String! @index @unique
+  collectionId: String!
   season: String! @index
   member: String! @index
   artist: String! @index
