@@ -1,13 +1,14 @@
 import * as spec from "./abi/objekt";
-import { CONTRACTS } from "./constants";
 import { Transfer } from "./model";
 import { Log, Transaction } from "./processor";
 import { addr } from "./util";
 import * as contractAbi from "./abi/objekt";
 import { BlockData } from "@subsquid/evm-processor";
 import { v4 } from "uuid";
+import { ARTISTS } from "./constants";
 
 const transferability = contractAbi.functions.batchUpdateObjektTransferrability;
+const CONTRACTS = ARTISTS.flatMap((artist) => artist.contract);
 
 type ConfiguredBlock = BlockData<{
   log: {
@@ -105,11 +106,10 @@ export function parseTransferabilityUpdate(
   tx: Transaction
 ): TransferabilityUpdate[] {
   try {
-    const calldata = transferability.decode(tx.input);
-
-    return calldata.tokenIds.map((tokenId) => ({
+    const { tokenIds, transferrable } = transferability.decode(tx.input);
+    return tokenIds.map((tokenId) => ({
       tokenId: tokenId.toString(),
-      transferable: calldata.transferrable,
+      transferable: transferrable,
     }));
   } catch (err) {
     return [];

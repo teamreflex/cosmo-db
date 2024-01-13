@@ -7,14 +7,10 @@ import {
 } from "@subsquid/evm-processor";
 import { lookupArchive } from "@subsquid/archive-registry";
 import * as contractAbi from "./abi/objekt";
-import {
-  CONTRACT_ARTMS,
-  CONTRACT_TRIPLES,
-  START_ARTMS,
-  START_TRIPLES,
-} from "./constants";
+import { ARTISTS } from "./constants";
 
-export const processor = new EvmBatchProcessor()
+const processor = new EvmBatchProcessor()
+  // default options
   .setDataSource({
     archive: lookupArchive("polygon", { type: "EVM" }),
     chain: "https://polygon-rpc.com",
@@ -34,26 +30,31 @@ export const processor = new EvmBatchProcessor()
       sighash: true,
     },
   })
-  .setFinalityConfirmation(200)
-  // artms objekts
-  .addLog({
-    address: [CONTRACT_ARTMS],
-    topic0: [contractAbi.events["Transfer"].topic],
-    transaction: true,
-    range: {
-      from: START_ARTMS,
-    },
-  })
-  // triples objekts
-  .addLog({
-    address: [CONTRACT_TRIPLES],
-    topic0: [contractAbi.events["Transfer"].topic],
-    transaction: true,
-    range: {
-      from: START_TRIPLES,
-    },
-  });
+  .setFinalityConfirmation(200);
 
+// add on per-artist options
+for (const artist of ARTISTS) {
+  processor
+    .addLog({
+      address: [artist.contract],
+      topic0: [contractAbi.events["Transfer"].topic],
+      transaction: true,
+      range: {
+        from: artist.start,
+      },
+    })
+    .addTransaction({
+      to: [artist.contract],
+      sighash: [
+        contractAbi.functions.batchUpdateObjektTransferrability.sighash,
+      ],
+      range: {
+        from: artist.start,
+      },
+    });
+}
+
+export { processor };
 export type Fields = EvmBatchProcessorFields<typeof processor>;
 export type Block = BlockHeader<Fields>;
 export type Log = _Log<Fields>;

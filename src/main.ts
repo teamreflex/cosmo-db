@@ -2,7 +2,7 @@ import "@total-typescript/ts-reset/filter-boolean";
 import { processor } from "./processor";
 import { Store, db } from "./db";
 import { PARALLEL_COUNT } from "./constants";
-import { parseBlocks } from "./parser";
+import { TransferabilityUpdate, parseBlocks } from "./parser";
 import { ObjektMetadata, fetchMetadataFromCosmo } from "./objekt";
 import { Collection, Objekt, Transfer } from "./model";
 import { addr } from "./util";
@@ -64,15 +64,29 @@ processor.run(db, async (ctx) => {
       transferBatch.push(currentTransfer);
     }
 
+    // upsert collections
     if (collectionBatch.size > 0) {
       await ctx.store.upsert(Array.from(collectionBatch.values()));
     }
 
+    // update objekt transferability
+    ctx.log.info(
+      `Handling ${transferabilityBuffer.length} transferability updates`
+    );
+    for (const update of transferabilityBuffer) {
+      const objekt = await handleTransferability(ctx, objektBatch, update);
+      if (objekt) {
+        objektBatch.set(objekt.id, objekt);
+      }
+    }
+
+    // upsert objekts
     if (objektBatch.size > 0) {
       await ctx.store.upsert(Array.from(objektBatch.values()));
     }
   }
 
+  // upsert transfers
   if (transferBuffer.length > 0) {
     await ctx.store.upsert(transferBuffer);
   }
@@ -141,20 +155,18 @@ async function handleObjekt(
   buffer: Map<string, Objekt>,
   transfer: Transfer
 ) {
-  // fetch from db
-  let objekt = await ctx.store.get(Objekt, transfer.tokenId);
-
   // fetch out of buffer
+  let objekt = buffer.get(transfer.tokenId);
+
+  // fetch from db
   if (!objekt) {
-    objekt = buffer.get(transfer.tokenId);
+    objekt = await ctx.store.get(Objekt, transfer.tokenId);
   }
 
-  // if not new, update fields
+  // if not new, update fields. skip transferable & usedForGrid
   if (objekt) {
     objekt.receivedAt = new Date(transfer.timestamp);
     objekt.owner = addr(transfer.to);
-    objekt.transferable = metadata.objekt.transferable;
-    objekt.usedForGrid = objekt.transferable && !metadata.objekt.transferable;
     return objekt;
   }
 
@@ -172,5 +184,36 @@ async function handleObjekt(
     });
   }
 
+  return objekt;
+}
+
+/**
+ * Update an objekt's transferable status.
+ */
+async function handleTransferability(
+  ctx: DataHandlerContext<Store>,
+  buffer: Map<string, Objekt>,
+  update: TransferabilityUpdate
+) {
+  // fetch out of buffer
+  let objekt = buffer.get(update.tokenId);
+
+  // fetch from db
+  if (!objekt) {
+    objekt = await ctx.store.get(Objekt, {
+      relations: { collection: true },
+      where: {
+        id: update.tokenId,
+      },
+    });
+  }
+
+  // shouldn't happen but oh well?
+  if (!objekt) return undefined;
+
+  objekt.transferable = update.transferable;
+  // naive assumption but should be okay
+  objekt.usedForGrid =
+    objekt.collection.class === "First" && update.transferable === false;
   return objekt;
 }
