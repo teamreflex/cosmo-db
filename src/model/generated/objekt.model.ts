@@ -31,6 +31,12 @@ export class Objekt {
   @Column_("int4", { nullable: false })
   serial!: number;
 
+  @Column_("boolean", { nullable: false })
+  transferable!: boolean;
+
+  @Column_("boolean", { nullable: false })
+  usedForGrid!: boolean;
+
   @OneToMany_(() => Transfer, (e) => e.objekt)
   transfers!: Transfer[];
 

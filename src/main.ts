@@ -23,6 +23,7 @@ processor.run(db, async (ctx) => {
           to: event.to,
           timestamp: new Date(event.timestamp),
           tokenId: event.tokenId,
+          hash: event.hash,
         })
     );
 
@@ -92,6 +93,9 @@ processor.run(db, async (ctx) => {
   }
 });
 
+/**
+ * Create or update the collection row.
+ */
 async function handleCollection(
   ctx: DataHandlerContext<Store>,
   metadata: ObjektMetadata,
@@ -130,14 +134,19 @@ async function handleCollection(
   collection.onOffline = metadata.objekt.collectionNo.includes("Z")
     ? "online"
     : "offline";
+  collection.thumbnailImage = metadata.objekt.thumbnailImage;
   collection.frontImage = metadata.objekt.frontImage;
   collection.backImage = metadata.objekt.backImage;
   collection.backgroundColor = metadata.objekt.backgroundColor;
   collection.textColor = metadata.objekt.textColor;
+  collection.accentColor = metadata.objekt.accentColor;
 
   return collection;
 }
 
+/**
+ * Create or update the objekt row.
+ */
 async function handleObjekt(
   ctx: DataHandlerContext<Store>,
   metadata: ObjektMetadata,
@@ -156,6 +165,8 @@ async function handleObjekt(
   if (objekt) {
     objekt.receivedAt = new Date(transfer.timestamp);
     objekt.owner = addr(transfer.to);
+    objekt.transferable = metadata.objekt.transferable;
+    objekt.usedForGrid = objekt.transferable && !metadata.objekt.transferable;
     return objekt;
   }
 
@@ -167,6 +178,9 @@ async function handleObjekt(
       receivedAt: new Date(transfer.timestamp),
       owner: addr(transfer.to),
       serial: metadata.objekt.objektNo,
+      transferable: metadata.objekt.transferable,
+      // an objekt cannot be created as already usedForGrid
+      usedForGrid: false,
     });
   }
 

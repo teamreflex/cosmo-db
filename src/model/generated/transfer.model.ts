@@ -31,6 +31,9 @@ export class Transfer {
   @Column_("text", { nullable: false })
   tokenId!: string;
 
+  @Column_("text", { nullable: false })
+  hash!: string;
+
   @Index_()
   @ManyToOne_(() => Objekt, { nullable: true })
   objekt!: Objekt;

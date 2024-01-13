@@ -9,10 +9,12 @@ type Collection @entity {
   artist: String! @index
   collectionNo: String! @index
   class: String! @index
+  thumbnailImage: String!
   frontImage: String!
   backImage: String!
   backgroundColor: String!
   textColor: String!
+  accentColor: String!
   comoAmount: Int!
   onOffline: String! @index
   transfers: [Transfer!] @derivedFrom(field: "collection")
@@ -25,6 +27,7 @@ type Transfer @entity {
   to: String! @index
   timestamp: DateTime!
   tokenId: String!
+  hash: String!
   objekt: Objekt!
   collection: Collection!
 }
@@ -35,6 +38,8 @@ type Objekt @entity {
   mintedAt: DateTime!
   receivedAt: DateTime!
   serial: Int!
+  transferable: Boolean!
+  usedForGrid: Boolean!
   transfers: [Transfer!] @derivedFrom(field: "objekt")
   collection: Collection!
 }

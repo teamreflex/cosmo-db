@@ -3,7 +3,18 @@ module.exports = class Data1700716889265 {
 
   async up(db) {
     await db.query(
-      `CREATE TABLE "objekt" ("id" character varying NOT NULL, "owner" text NOT NULL, "minted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "received_at" TIMESTAMP WITH TIME ZONE NOT NULL, "serial" integer NOT NULL, "collection_id" character varying, CONSTRAINT "PK_a50fda223abd7f6ae55f2cf629f" PRIMARY KEY ("id"))`
+      `CREATE TABLE "objekt" (
+        "id" character varying NOT NULL,
+        "owner" text NOT NULL,
+        "minted_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "received_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "serial" integer NOT NULL,
+        "transferable" bool NOT NULL,
+        "used_for_grid" bool NOT NULL,
+        "collection_id" character varying,
+        CONSTRAINT "PK_a50fda223abd7f6ae55f2cf629f"
+        PRIMARY KEY ("id")
+      )`
     );
     await db.query(
       `CREATE INDEX "IDX_d2ddf18405b46538e169ab03e8" ON "objekt" ("owner") `
@@ -12,7 +23,18 @@ module.exports = class Data1700716889265 {
       `CREATE INDEX "IDX_cc0196669f13f5958a307824a2" ON "objekt" ("collection_id") `
     );
     await db.query(
-      `CREATE TABLE "transfer" ("id" character varying NOT NULL, "from" text NOT NULL, "to" text NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "token_id" text NOT NULL, "objekt_id" character varying, "collection_id" character varying, CONSTRAINT "PK_fd9ddbdd49a17afcbe014401295" PRIMARY KEY ("id"))`
+      `CREATE TABLE "transfer" (
+        "id" character varying NOT NULL,
+        "from" text NOT NULL,
+        "to" text NOT NULL,
+        "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "token_id" text NOT NULL,
+        "objekt_id" character varying,
+        "hash" text NOT NULL,
+        "collection_id" character varying,
+        CONSTRAINT "PK_fd9ddbdd49a17afcbe014401295"
+        PRIMARY KEY ("id")
+      )`
     );
     await db.query(
       `CREATE INDEX "IDX_be54ea276e0f665ffc38630fc0" ON "transfer" ("from") `
@@ -27,7 +49,27 @@ module.exports = class Data1700716889265 {
       `CREATE INDEX "IDX_15a8d2966ae7e5e9b2ff47104f" ON "transfer" ("collection_id") `
     );
     await db.query(
-      `CREATE TABLE "collection" ("id" character varying NOT NULL, "contract" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "collection_id" text NOT NULL, "season" text NOT NULL, "member" text NOT NULL, "artist" text NOT NULL, "collection_no" text NOT NULL, "class" text NOT NULL, "front_image" text NOT NULL, "back_image" text NOT NULL, "background_color" text NOT NULL, "text_color" text NOT NULL, "como_amount" integer NOT NULL, "on_offline" text NOT NULL, CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85" PRIMARY KEY ("id"))`
+      `CREATE TABLE "collection" (
+        "id" character varying NOT NULL,
+        "contract" text NOT NULL,
+        "created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "collection_id" text NOT NULL,
+        "season" text NOT NULL,
+        "member" text NOT NULL,
+        "artist" text NOT NULL,
+        "collection_no" text NOT NULL,
+        "class" text NOT NULL,
+        "thumbnail_image" text NOT NULL,
+        "front_image" text NOT NULL,
+        "back_image" text NOT NULL,
+        "background_color" text NOT NULL,
+        "text_color" text NOT NULL,
+        "accent_color" text NOT NULL,
+        "como_amount" integer NOT NULL,
+        "on_offline" text NOT NULL,
+        CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85"
+        PRIMARY KEY ("id")
+      )`
     );
     await db.query(
       `CREATE INDEX "IDX_e814aff6539600dfcc88af41fc" ON "collection" ("contract") `

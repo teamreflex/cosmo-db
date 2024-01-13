@@ -8,6 +8,7 @@ export type TransferEvent = {
   to: string;
   tokenId: string;
   timestamp: number;
+  hash: string;
 };
 
 export function parseEvent(log: Log): TransferEvent | undefined {
@@ -20,6 +21,7 @@ export function parseEvent(log: Log): TransferEvent | undefined {
         contract: addr(log.address),
         tokenId: event.tokenId.toString(),
         timestamp: log.block.timestamp,
+        hash: log.transactionHash,
       };
     }
     return undefined;
