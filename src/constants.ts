@@ -1,8 +1,14 @@
-export const CONTRACT_ARTMS = "0x0fb69f54ba90f17578a59823e09e5a1f8f3fa200";
-export const START_ARTMS = 44048396;
-export const CONTRACT_TRIPLES = "0xa4b37be40f7b231ee9574c4b16b7ddb7eacdc99b";
-export const START_TRIPLES = 29388703;
-export const CONTRACTS = [CONTRACT_ARTMS, CONTRACT_TRIPLES];
-export const MINT_ADDRESS = "0x0000000000000000000000000000000000000000";
-
 export const PARALLEL_COUNT = 500;
+// TODO: if/when new artists are regularly added, just pull from api
+export const ARTISTS = [
+  // tripleS
+  {
+    contract: "0xa4b37be40f7b231ee9574c4b16b7ddb7eacdc99b",
+    start: 31011719,
+  },
+  // ARTMS
+  {
+    contract: "0x0fb69f54ba90f17578a59823e09e5a1f8f3fa200",
+    start: 44048396,
+  },
+];

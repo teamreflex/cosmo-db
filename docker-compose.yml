@@ -8,7 +8,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PASSWORD=${DB_PASS}
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "${DB_PORT}:5432"
     volumes:
       - db:/var/lib/postgresql/data
       # Uncomment for logging all SQL statements
