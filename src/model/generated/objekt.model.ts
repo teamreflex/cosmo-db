@@ -25,15 +25,19 @@ export class Objekt {
   @Column_("timestamp with time zone", { nullable: false })
   mintedAt!: Date;
 
+  @Index_()
   @Column_("timestamp with time zone", { nullable: false })
   receivedAt!: Date;
 
+  @Index_()
   @Column_("int4", { nullable: false })
   serial!: number;
 
+  @Index_()
   @Column_("boolean", { nullable: false })
   transferable!: boolean;
 
+  @Index_()
   @Column_("boolean", { nullable: false })
   usedForGrid!: boolean;
 

@@ -37,10 +37,10 @@ type Objekt @entity {
   id: ID! @index # tokenId
   owner: String! @index
   mintedAt: DateTime!
-  receivedAt: DateTime!
-  serial: Int!
-  transferable: Boolean!
-  usedForGrid: Boolean!
+  receivedAt: DateTime! @index
+  serial: Int! @index
+  transferable: Boolean! @index
+  usedForGrid: Boolean! @index
   transfers: [Transfer!] @derivedFrom(field: "objekt")
   collection: Collection!
 }
