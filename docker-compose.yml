@@ -43,21 +43,22 @@ services:
     command: ["sqd", "process:prod"]
     depends_on:
       - db
-  # proxy:
-  #   build:
-  #     context: .
-  #     dockerfile: proxy.Dockerfile
-  #   restart: always
-  #   environment:
-  #     - DB_NAME
-  #     - DB_PORT=5432
-  #     - DB_HOST=db
-  #     - DB_PASS
-  #     - PROXY_PORT
-  #   ports:
-  #     - "${PROXY_PORT}:${PROXY_PORT}"
-  #   depends_on:
-  #     - db
+  proxy:
+    build:
+      context: .
+      dockerfile: proxy.Dockerfile
+    restart: always
+    environment:
+      - PROXY_HOST
+      - PROXY_USER
+      - PROXY_NAME
+      - PROXY_PASS
+      - PROXY_PORT
+      - PROXY_HTTP_PORT
+    ports:
+      - "${PROXY_HTTP_PORT}:${PROXY_HTTP_PORT}"
+    depends_on:
+      - db
 volumes:
   db:
     driver: local

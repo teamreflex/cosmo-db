@@ -15,9 +15,9 @@
     "@subsquid/util-internal-json": "^1.2.0",
     "@total-typescript/ts-reset": "^0.5.1",
     "ethers": "^6.5.1",
-    "express": "^4.18.2",
+    "hono": "^4.1.0",
     "ofetch": "^1.3.3",
-    "pg": "^8.11.0",
+    "pg": "^8.11.3",
     "typeorm": "^0.3.16",
     "uuid": "^9.0.1"
   },
@@ -26,7 +26,7 @@
     "@subsquid/squid-gen-evm": "^1.1.0",
     "@subsquid/typeorm-codegen": "^1.2.0",
     "@types/node": "^18.16.17",
-    "@types/pg": "^8.10.9",
+    "@types/pg": "^8.11.2",
     "@types/uuid": "^9.0.7",
     "typescript": "~5.1.3"
   }

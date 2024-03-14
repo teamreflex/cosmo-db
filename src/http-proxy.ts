@@ -1,52 +1,58 @@
 import { Client } from "pg";
-import express from "express";
+import { Hono } from "hono";
 
-const app = express();
-
-app.use(express.json());
-const port = process.env.PROXY_PORT;
+const app = new Hono();
 
 const client = new Client({
-  host: "db",
-  user: "postgres",
-  password: process.env.DB_PASS,
-  port: Number(process.env.DB_PORT),
-  database: process.env.DB_NAME,
+  host: process.env.PROXY_HOST,
+  user: process.env.PROXY_USER,
+  database: process.env.PROXY_NAME,
+  password: process.env.PROXY_PASS,
+  port: Number(process.env.PROXY_PORT),
 });
 
-app.post("/query", async (req, res) => {
-  const { sql, params, method } = req.body;
+// @ts-ignore - using bun
+await client.connect();
+
+app.post("/query", async (c) => {
+  const key = c.req.header("proxy-key");
+  if (key !== process.env.PROXY_KEY) {
+    return c.json({ error: "Invalid key" }, 401);
+  }
+
+  const { sql, params, method } = await c.req.json();
 
   // prevent multiple queries
   const sqlBody = sql.replace(/;/g, "");
 
-  if (method === "all") {
-    try {
+  try {
+    if (method === "all") {
       const result = await client.query({
         text: sqlBody,
         values: params,
         rowMode: "array",
       });
-      res.send(result.rows);
-    } catch (e: any) {
-      res.status(500).json({ error: e });
+      return c.json(result.rows);
     }
-  } else if (method === "execute") {
-    try {
+
+    if (method === "execute") {
       const result = await client.query({
         text: sqlBody,
         values: params,
       });
-
-      res.send(result.rows);
-    } catch (e: any) {
-      res.status(500).json({ error: e });
+      return c.json(result.rows);
     }
-  } else {
-    res.status(500).json({ error: "Unknown method value" });
+
+    return c.json({ error: "Unknown method value" }, 500);
+  } catch (e) {
+    console.error(e);
+    return c.json({ error: "error" }, 500);
   }
 });
 
-app.listen(port, () => {
-  console.log(`Postgres proxy listening on port ${port}`);
-});
+console.log(`Proxy listening on port ${process.env.PROXY_HTTP_PORT}`);
+
+export default {
+  port: process.env.PROXY_HTTP_PORT,
+  fetch: app.fetch,
+};
