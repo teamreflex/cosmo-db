@@ -4,16 +4,17 @@ services:
     image: postgres:15
     environment:
       - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
       - DB_READ_USER
     healthcheck:
-      test: "pg_isready -d ${DB_NAME} -U ${DB_READ_USER}"
+      test: "pg_isready -d ${DB_NAME} -U ${DB_USER}"
       interval: 30s
       timeout: 60s
       retries: 5
       start_period: 80s
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "${DB_PORT}:5432"
     volumes:
       - db:/var/lib/postgresql/data
       # command: ["postgres", "-c", "log_statement=all"]
@@ -26,7 +27,7 @@ services:
       - FORCE_PRETTY_LOGGER
       - RPC_ENDPOINT
       - DB_HOST
-      - DB_PORT
+      - DB_PORT=5432
       - DB_NAME
       - DB_USER
       - DB_PASS
@@ -44,7 +45,7 @@ services:
     restart: always
     environment:
       - DB_HOST
-      - DB_PORT
+      - DB_PORT=5432
       - DB_NAME
       - DB_USER
       - DB_PASS
@@ -63,7 +64,7 @@ services:
     restart: always
     environment:
       - DB_HOST
-      - DB_PORT
+      - DB_PORT=5432
       - DB_NAME
       - DB_READ_USER
       - DB_READ_PASS
