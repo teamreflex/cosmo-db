@@ -3,7 +3,8 @@ name: cosmo-db
 version: 1
 description: A squid indexer generated from an ABI template
 secrets:
-  - ALCHEMY_KEY
+  - ENABLE_OBJEKTS
+  - ENABLE_GRAVITY
 build:
 deploy:
   addons:
