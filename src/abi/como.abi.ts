@@ -168,6 +168,28 @@ export const ABI_JSON = [
     ],
   },
   {
+    type: "function",
+    name: "mint",
+    constant: false,
+    payable: false,
+    inputs: [
+      {
+        type: "address",
+        name: "to",
+      },
+      {
+        type: "uint256",
+        name: "value",
+      },
+    ],
+    outputs: [
+      {
+        type: "bool",
+        name: "",
+      },
+    ],
+  },
+  {
     type: "fallback",
     stateMutability: "payable",
   },
