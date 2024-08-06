@@ -20,7 +20,9 @@ export async function processorStatus(c: Context) {
 
   if (result.rows.length > 0) {
     const row = result.rows[0];
-    return c.json({ height: row.height });
+    return c.json({ height: row.height }, 200, {
+      "Cache-Control": `public, max-age=${env.PROXY_CACHE_MAX_AGE}, stale-while-revalidate=30`,
+    });
   }
 
   return c.json({ height: 0 });

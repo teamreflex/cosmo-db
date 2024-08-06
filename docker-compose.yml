@@ -53,6 +53,7 @@ services:
       - DB_READ_PASS
       - PROXY_HTTP_PORT
       - PROXY_KEY
+      - PROXY_CACHE_MAX_AGE
     ports:
       - "${PROXY_HTTP_PORT}:${PROXY_HTTP_PORT}"
     depends_on:
