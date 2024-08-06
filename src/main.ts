@@ -163,7 +163,10 @@ async function handleCollection(
   buffer: Map<string, Collection>,
   transfer: Transfer
 ) {
-  const slug = metadata.objekt.collectionId.replace(/ /g, "-").toLowerCase();
+  const slug = metadata.objekt.collectionId
+    .replace(/[+()]/g, "") // remove special symbols
+    .replace(/ /g, "-") // replace spaces with hyphens
+    .toLowerCase(); // normalize to lowercase
 
   // fetch from db
   let collection = await ctx.store.get(Collection, {
