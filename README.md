@@ -27,6 +27,8 @@ Postgres 15.5 database server.
 Subsquid processor that parses and stores data from the chain.
 
 - `RPC_ENDPOINT`: RPC endpoint to use for the chain.
+- `RPC_RATE_LIMIT`: Rate limit for the RPC endpoint (req/s).
+- `RPC_FINALITY`: Finality confirmation for RPC ingestion.
 - `ENABLE_OBJEKTS`: Enable objekt processing.
 - `ENABLE_GRAVITY`: Enable COMO/gravity processing.
 

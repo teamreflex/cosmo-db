@@ -20,7 +20,7 @@ const processor = new EvmBatchProcessor()
   .setGateway("https://v2.archive.subsquid.io/network/polygon-mainnet")
   .setRpcEndpoint({
     url: env.RPC_ENDPOINT,
-    rateLimit: 2,
+    rateLimit: env.RPC_RATE_LIMIT,
   })
   .setFields({
     log: {
@@ -33,7 +33,7 @@ const processor = new EvmBatchProcessor()
       sighash: true,
     },
   })
-  .setFinalityConfirmation(60);
+  .setFinalityConfirmation(env.RPC_FINALITY);
 
 // add on per-artist options
 for (const artist of ARTISTS) {
