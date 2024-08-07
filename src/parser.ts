@@ -1,5 +1,5 @@
 import { Transfer } from "./model";
-import { Log, Transaction } from "./processor";
+import { Fields, Log, Transaction } from "./processor";
 import { addr } from "./util";
 import { BlockData } from "@subsquid/evm-processor";
 import * as objektAbi from "./abi/objekt";
@@ -11,26 +11,10 @@ import { randomUUID } from "crypto";
 const transferability = objektAbi.functions.batchUpdateObjektTransferrability;
 const reveal = governorAbi.functions.reveal;
 
-type ConfiguredBlock = BlockData<{
-  log: {
-    topics: true;
-    data: true;
-    transactionHash: true;
-  };
-  transaction: {
-    hash: true;
-    input: true;
-    from: true;
-    value: true;
-    status: true;
-    sighash: true;
-  };
-}>;
-
 /**
  * Parse incoming blocks.
  */
-export function parseBlocks(blocks: ConfiguredBlock[]) {
+export function parseBlocks(blocks: BlockData<Fields>[]) {
   const logs = blocks.flatMap((block) => block.logs);
   const transactions = blocks.flatMap((block) => block.transactions);
 
@@ -95,8 +79,8 @@ export type TransferEvent = {
  */
 export function parseTransferEvent(log: Log): TransferEvent | undefined {
   try {
-    if (log.topics[0] === objektAbi.events["Transfer"].topic) {
-      const event = objektAbi.events["Transfer"].decode(log);
+    if (log.topics[0] === objektAbi.events.Transfer.topic) {
+      const event = objektAbi.events.Transfer.decode(log);
       return {
         hash: log.transactionHash,
         from: addr(event.from),
@@ -149,8 +133,8 @@ export type ComoBalanceEvent = {
  */
 export function parseComoBalanceEvent(log: Log): ComoBalanceEvent | undefined {
   try {
-    if (log.topics[0] === comoAbi.events["Transfer"].topic) {
-      const event = comoAbi.events["Transfer"].decode(log);
+    if (log.topics[0] === comoAbi.events.Transfer.topic) {
+      const event = comoAbi.events.Transfer.decode(log);
 
       return {
         hash: log.transactionHash,
@@ -183,7 +167,7 @@ export type VoteEvent = {
  */
 export function parseVote(log: Log): VoteEvent | undefined {
   try {
-    const event = governorAbi.events["Voted"].decode(log);
+    const event = governorAbi.events.Voted.decode(log);
 
     return {
       id: log.id,

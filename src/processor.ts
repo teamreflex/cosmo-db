@@ -12,6 +12,10 @@ import * as contractComo from "./abi/como";
 import { ARTISTS } from "./constants";
 import { env } from "./env/processor";
 
+console.log(
+  `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS} & gravity ${env.ENABLE_GRAVITY}`
+);
+
 const processor = new EvmBatchProcessor()
   .setGateway("https://v2.archive.subsquid.io/network/polygon-mainnet")
   .setRpcEndpoint({
@@ -24,20 +28,12 @@ const processor = new EvmBatchProcessor()
       data: true,
       transactionHash: true,
     },
-    evmLog: {
-      topics: true,
-      data: true,
-    },
     transaction: {
-      hash: true,
       input: true,
-      from: true,
-      value: true,
-      status: true,
       sighash: true,
     },
   })
-  .setFinalityConfirmation(150);
+  .setFinalityConfirmation(60);
 
 // add on per-artist options
 for (const artist of ARTISTS) {
@@ -45,8 +41,7 @@ for (const artist of ARTISTS) {
     // objekt transfers
     .addLog({
       address: [artist.contracts.Objekt],
-      topic0: [contractObjekt.events["Transfer"].topic],
-      transaction: true,
+      topic0: [contractObjekt.events.Transfer.topic],
       range: { from: artist.start },
     })
     // objekt transferability updates
@@ -60,15 +55,13 @@ for (const artist of ARTISTS) {
     // como transfers
     .addLog({
       address: [artist.contracts.Como],
-      topic0: [contractComo.events["Transfer"].topic],
-      transaction: true,
+      topic0: [contractComo.events.Transfer.topic],
       range: { from: artist.start },
     })
     // vote events
     .addLog({
       address: [artist.contracts.Governor],
-      topic0: [contractGovernor.events["Voted"].topic],
-      transaction: true,
+      topic0: [contractGovernor.events.Voted.topic],
       range: { from: artist.start },
     })
     // vote reveal

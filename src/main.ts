@@ -1,4 +1,4 @@
-import { processor } from "./processor";
+import { processor, ProcessorContext } from "./processor";
 import { BURN_ADDRESS, CONTRACTS, PARALLEL_COUNT } from "./constants";
 import {
   ComoBalanceEvent,
@@ -10,7 +10,6 @@ import {
 import { ObjektMetadata, fetchMetadataFromCosmo } from "./objekt";
 import { Collection, ComoBalance, Objekt, Transfer, Vote } from "./model";
 import { addr, chunk } from "./util";
-import { DataHandlerContext } from "@subsquid/evm-processor";
 import { TypeormDatabase, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { env } from "./env/processor";
@@ -22,13 +21,16 @@ processor.run(db, async (ctx) => {
     parseBlocks(ctx.blocks);
 
   if (env.ENABLE_OBJEKTS) {
+    if (transfers.length > 0) {
+      ctx.log.info(`Processing ${transfers.length} objekt transfers`);
+    }
+
     // chunk everything into batches
     await chunk(transfers, PARALLEL_COUNT, async (chunk) => {
       const transferBatch: Transfer[] = [];
       const collectionBatch = new Map<string, Collection>();
       const objektBatch = new Map<string, Objekt>();
 
-      ctx.log.info(`Fetching metadata for ${chunk.length} tokens`);
       const metadataBatch = await Promise.allSettled(
         chunk.map((e) => fetchMetadataFromCosmo(e.tokenId))
       );
@@ -78,10 +80,12 @@ processor.run(db, async (ctx) => {
         await ctx.store.upsert(Array.from(collectionBatch.values()));
       }
 
+      if (transferability.length > 0) {
+        ctx.log.info(
+          `Handling ${transferability.length} transferability updates`
+        );
+      }
       // update objekt transferability
-      ctx.log.info(
-        `Handling ${transferability.length} transferability updates`
-      );
       for (const update of transferability) {
         const objekt = await handleTransferability(ctx, objektBatch, update);
         if (objekt) {
@@ -104,10 +108,18 @@ processor.run(db, async (ctx) => {
   if (env.ENABLE_GRAVITY) {
     const voteBatch: Vote[] = [];
 
+    if (votes.length > 0) {
+      ctx.log.info(`Processing ${votes.length} gravity votes`);
+    }
+
     // handle vote creation
     for (let i = 0; i < votes.length; i++) {
       const vote = await handleVoteCreation(votes[i]);
       voteBatch.push(vote);
+    }
+
+    if (voteReveals.length > 0) {
+      ctx.log.info(`Processing ${voteReveals.length} gravity vote reveals`);
     }
 
     // handle vote reveals
@@ -127,6 +139,12 @@ processor.run(db, async (ctx) => {
 
     if (voteBatch.length > 0) {
       await ctx.store.upsert(voteBatch);
+    }
+
+    if (comoBalanceUpdates.length > 0) {
+      ctx.log.info(
+        `Processing ${comoBalanceUpdates.length} COMO balance updates`
+      );
     }
 
     // handle como balance updates
@@ -158,7 +176,7 @@ processor.run(db, async (ctx) => {
  * Create or update the collection row.
  */
 async function handleCollection(
-  ctx: DataHandlerContext<Store>,
+  ctx: ProcessorContext<Store>,
   metadata: ObjektMetadata,
   buffer: Map<string, Collection>,
   transfer: Transfer
@@ -215,7 +233,7 @@ async function handleCollection(
  * Create or update the objekt row.
  */
 async function handleObjekt(
-  ctx: DataHandlerContext<Store>,
+  ctx: ProcessorContext<Store>,
   metadata: ObjektMetadata,
   buffer: Map<string, Objekt>,
   transfer: Transfer
@@ -254,7 +272,7 @@ async function handleObjekt(
  * Update an objekt's transferable status.
  */
 async function handleTransferability(
-  ctx: DataHandlerContext<Store>,
+  ctx: ProcessorContext<Store>,
   buffer: Map<string, Objekt>,
   update: TransferabilityUpdate
 ) {
@@ -298,7 +316,7 @@ async function handleVoteCreation(event: VoteEvent) {
  * Update vote with reveal.
  */
 async function handleVoteReveal(
-  ctx: DataHandlerContext<Store>,
+  ctx: ProcessorContext<Store>,
   buffer: Vote[],
   event: VoteReveal
 ) {
@@ -336,7 +354,7 @@ const EXCLUDE = [...Object.values(CONTRACTS).flat(), BURN_ADDRESS];
  * Update como balance.
  */
 async function handleComoBalanceUpdate(
-  ctx: DataHandlerContext<Store>,
+  ctx: ProcessorContext<Store>,
   buffer: Map<string, ComoBalance>,
   event: ComoBalanceEvent
 ) {
@@ -370,7 +388,7 @@ function balanceKey({ owner, contract }: { owner: string; contract: string }) {
  * Fetch a como balance from the buffer, db or create a new one.
  */
 async function getBalance(
-  ctx: DataHandlerContext<Store>,
+  ctx: ProcessorContext<Store>,
   buffer: Map<string, ComoBalance>,
   owner: string,
   contract: string

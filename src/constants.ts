@@ -15,7 +15,7 @@ export const ARTISTS = [
       CommunityPool: "0xdAE81c4c069c86fea2FC08cfD53a4201D661e447",
       ComoMinter: "0x1f6Be90bCb84523beF86E8cD1E8F1944Ca30eb5F",
     },
-    start: 31011719,
+    start: 29388703,
   },
   // ARTMS
   {
