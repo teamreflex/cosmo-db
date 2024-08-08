@@ -34,8 +34,8 @@ export async function fetchMetadataFromCosmo(tokenId: string) {
   return await ofetch<ObjektMetadata>(
     `https://api.cosmo.fans/objekt/v1/token/${tokenId}`,
     {
-      retry: 5,
-      retryDelay: 250, // 250ms backoff
+      retry: 2,
+      retryDelay: 500, // 500ms backoff
     }
   );
 }

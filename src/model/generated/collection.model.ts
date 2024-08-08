@@ -21,6 +21,7 @@ export class Collection {
   @Column_("text", { nullable: false })
   contract!: string;
 
+  @Index_()
   @Column_("timestamp with time zone", { nullable: false })
   createdAt!: Date;
 

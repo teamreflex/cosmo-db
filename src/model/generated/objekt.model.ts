@@ -37,10 +37,6 @@ export class Objekt {
   @Column_("boolean", { nullable: false })
   transferable!: boolean;
 
-  @Index_()
-  @Column_("boolean", { nullable: false })
-  usedForGrid!: boolean;
-
   @OneToMany_(() => Transfer, (e) => e.objekt)
   transfers!: Transfer[];
 

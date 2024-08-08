@@ -1,19 +1,26 @@
 import {
+  BlockHeader,
+  DataHandlerContext,
   EvmBatchProcessor,
   EvmBatchProcessorFields,
-  BlockHeader,
   Log as _Log,
   Transaction as _Transaction,
 } from "@subsquid/evm-processor";
-import { lookupArchive } from "@subsquid/archive-registry";
-import * as contractAbi from "./abi/objekt";
+import * as contractObjekt from "./abi/objekt";
+import * as contractGovernor from "./abi/governor";
+import * as contractComo from "./abi/como";
 import { ARTISTS } from "./constants";
+import { env } from "./env/processor";
+
+console.log(
+  `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS} & gravity ${env.ENABLE_GRAVITY}`
+);
 
 const processor = new EvmBatchProcessor()
-  // default options
-  .setDataSource({
-    archive: lookupArchive("polygon", { type: "EVM" }),
-    chain: "https://polygon-rpc.com",
+  .setGateway("https://v2.archive.subsquid.io/network/polygon-mainnet")
+  .setRpcEndpoint({
+    url: env.RPC_ENDPOINT,
+    rateLimit: env.RPC_RATE_LIMIT,
   })
   .setFields({
     log: {
@@ -22,35 +29,46 @@ const processor = new EvmBatchProcessor()
       transactionHash: true,
     },
     transaction: {
-      hash: true,
       input: true,
-      from: true,
-      value: true,
-      status: true,
       sighash: true,
     },
   })
-  .setFinalityConfirmation(200);
+  .setFinalityConfirmation(env.RPC_FINALITY);
 
 // add on per-artist options
 for (const artist of ARTISTS) {
   processor
+    // objekt transfers
     .addLog({
-      address: [artist.contract],
-      topic0: [contractAbi.events["Transfer"].topic],
-      transaction: true,
-      range: {
-        from: artist.start,
-      },
+      address: [artist.contracts.Objekt],
+      topic0: [contractObjekt.events.Transfer.topic],
+      range: { from: artist.start },
     })
+    // objekt transferability updates
     .addTransaction({
-      to: [artist.contract],
+      to: [artist.contracts.Objekt],
       sighash: [
-        contractAbi.functions.batchUpdateObjektTransferrability.sighash,
+        contractObjekt.functions.batchUpdateObjektTransferrability.sighash,
       ],
-      range: {
-        from: artist.start,
-      },
+      range: { from: artist.start },
+    })
+    // como transfers
+    .addLog({
+      address: [artist.contracts.Como],
+      topic0: [contractComo.events.Transfer.topic],
+      range: { from: artist.start },
+    })
+    // vote events
+    .addLog({
+      address: [artist.contracts.Governor],
+      topic0: [contractGovernor.events.Voted.topic],
+      range: { from: artist.start },
+    })
+    // vote reveal
+    .addTransaction({
+      to: [artist.contracts.Governor],
+      sighash: [contractGovernor.functions.reveal.sighash],
+      range: { from: artist.start },
     });
 }
 
@@ -59,3 +77,4 @@ export type Fields = EvmBatchProcessorFields<typeof processor>;
 export type Block = BlockHeader<Fields>;
 export type Log = _Log<Fields>;
 export type Transaction = _Transaction<Fields>;
+export type ProcessorContext<Store> = DataHandlerContext<Store, Fields>;

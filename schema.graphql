@@ -1,7 +1,7 @@
 type Collection @entity {
   id: ID! @index # uuid
   contract: String! @index
-  createdAt: DateTime!
+  createdAt: DateTime! @index
   slug: String! @index @unique
   # objekt fields
   collectionId: String!
@@ -26,7 +26,7 @@ type Transfer @entity {
   id: ID! @index # uuid
   from: String! @index
   to: String! @index
-  timestamp: DateTime!
+  createdAt: DateTime! @index
   tokenId: String!
   hash: String!
   objekt: Objekt!
@@ -40,7 +40,24 @@ type Objekt @entity {
   receivedAt: DateTime! @index
   serial: Int! @index
   transferable: Boolean! @index
-  usedForGrid: Boolean! @index
   transfers: [Transfer!] @derivedFrom(field: "objekt")
   collection: Collection!
+}
+
+type ComoBalance @entity {
+  id: ID! # uuid
+  contract: String! @index
+  owner: String! @index
+  amount: Int! @index
+}
+
+type Vote @entity {
+  id: ID! # uuid
+  from: String! @index
+  createdAt: DateTime! @index
+  contract: String! @index
+  pollId: Int! @index
+  candidateId: Int @index
+  index: Int! @index
+  amount: Int! @index
 }
