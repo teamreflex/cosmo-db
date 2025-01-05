@@ -3,7 +3,7 @@ import {
   Column as Column_,
   PrimaryColumn as PrimaryColumn_,
   Index as Index_,
-} from "typeorm";
+} from "@subsquid/typeorm-store";
 import * as marshal from "./marshal";
 
 @Entity_()

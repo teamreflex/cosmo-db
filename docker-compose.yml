@@ -35,6 +35,7 @@ services:
       - DB_READ_PASS
       - ENABLE_OBJEKTS
       - ENABLE_GRAVITY
+      - COSMO_PARALLEL_COUNT
     command: ["sqd", "process:prod"]
     depends_on:
       - db

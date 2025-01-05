@@ -5,7 +5,7 @@ import {
   Index as Index_,
   OneToMany as OneToMany_,
   ManyToOne as ManyToOne_,
-} from "typeorm";
+} from "@subsquid/typeorm-store";
 import { Transfer } from "./transfer.model";
 import { Collection } from "./collection.model";
 

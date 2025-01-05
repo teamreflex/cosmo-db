@@ -7,7 +7,7 @@ A [Subsquid](https://subsquid.io/) indexer for ARTMS and tripleS NFTs.
 ```bash
 $ git clone git@github.com:teamreflex/cosmo-db.git
 $ cd cosmo-db
-$ npm ci
+$ pnpm i
 $ cp .env.example .env
 $ docker compose up -d
 ```
@@ -31,6 +31,7 @@ Subsquid processor that parses and stores data from the chain.
 - `RPC_FINALITY`: Finality confirmation for RPC ingestion.
 - `ENABLE_OBJEKTS`: Enable objekt processing.
 - `ENABLE_GRAVITY`: Enable COMO/gravity processing.
+- `COSMO_PARALLEL_COUNT`: Number of objekts to fetch metadata for in parallel.
 
 ### drizzle-proxy
 

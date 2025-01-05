@@ -1,5 +1,5 @@
 import { processor, ProcessorContext } from "./processor";
-import { BURN_ADDRESS, CONTRACTS, PARALLEL_COUNT } from "./constants";
+import { BURN_ADDRESS, CONTRACTS } from "./constants";
 import {
   ComoBalanceEvent,
   TransferabilityUpdate,
@@ -7,7 +7,7 @@ import {
   VoteReveal,
   parseBlocks,
 } from "./parser";
-import { ObjektMetadata, fetchMetadataFromCosmo } from "./objekt";
+import { ObjektMetadata, fetchMetadataFromCosmo } from "./cosmo";
 import { Collection, ComoBalance, Objekt, Transfer, Vote } from "./model";
 import { addr, chunk } from "./util";
 import { TypeormDatabase, Store } from "@subsquid/typeorm-store";
@@ -26,7 +26,7 @@ processor.run(db, async (ctx) => {
     }
 
     // chunk everything into batches
-    await chunk(transfers, PARALLEL_COUNT, async (chunk) => {
+    await chunk(transfers, env.COSMO_PARALLEL_COUNT, async (chunk) => {
       const transferBatch: Transfer[] = [];
       const collectionBatch = new Map<string, Collection>();
       const objektBatch = new Map<string, Objekt>();
@@ -35,15 +35,11 @@ processor.run(db, async (ctx) => {
         chunk.map((e) => fetchMetadataFromCosmo(e.tokenId))
       );
 
-      // iterate over each objekt
+      // iterate over each objekt metadata request
       for (let j = 0; j < metadataBatch.length; j++) {
         const request = metadataBatch[j];
         const currentTransfer = chunk[j];
-        if (
-          request.status === "rejected" ||
-          !request.value ||
-          !request.value.objekt
-        ) {
+        if (request.status === "rejected") {
           ctx.log.error(
             `Unable to fetch metadata for token ${currentTransfer.tokenId}`
           );
@@ -80,28 +76,23 @@ processor.run(db, async (ctx) => {
         await ctx.store.upsert(Array.from(collectionBatch.values()));
       }
 
-      if (transferability.length > 0) {
-        ctx.log.info(
-          `Handling ${transferability.length} transferability updates`
-        );
-      }
-      // update objekt transferability
-      for (const update of transferability) {
-        const objekt = await handleTransferability(ctx, objektBatch, update);
-        if (objekt) {
-          objektBatch.set(objekt.id, objekt);
-        }
-      }
-
       // upsert objekts
       if (objektBatch.size > 0) {
         await ctx.store.upsert(Array.from(objektBatch.values()));
       }
+
+      // upsert transfers
+      if (transferBatch.length > 0) {
+        await ctx.store.upsert(transferBatch);
+      }
     });
 
-    // upsert transfers
-    if (transfers.length > 0) {
-      await ctx.store.upsert(transfers);
+    // process transferability updates separately from transfers
+    if (transferability.length > 0) {
+      ctx.log.info(
+        `Handling ${transferability.length} transferability updates`
+      );
+      await handleTransferabilityUpdates(ctx, transferability);
     }
   }
 
@@ -269,31 +260,27 @@ async function handleObjekt(
 }
 
 /**
- * Update an objekt's transferable status.
+ * Update a batch of transferability updates.
  */
-async function handleTransferability(
+async function handleTransferabilityUpdates(
   ctx: ProcessorContext<Store>,
-  buffer: Map<string, Objekt>,
-  update: TransferabilityUpdate
+  updates: TransferabilityUpdate[]
 ) {
-  // fetch out of buffer
-  let objekt = buffer.get(update.tokenId);
-
-  // fetch from db
-  if (!objekt) {
-    objekt = await ctx.store.get(Objekt, {
-      relations: { collection: true },
-      where: {
-        id: update.tokenId,
-      },
-    });
+  const batch = new Map<string, Objekt>();
+  for (const update of updates) {
+    const objekt = await ctx.store.get(Objekt, update.tokenId);
+    if (objekt) {
+      objekt.transferable = update.transferable;
+      batch.set(objekt.id, objekt);
+    } else {
+      ctx.log.error(
+        `Unable to find objekt ${update.tokenId} for transferability update`
+      );
+    }
   }
-
-  // shouldn't happen but oh well?
-  if (!objekt) return undefined;
-
-  objekt.transferable = update.transferable;
-  return objekt;
+  if (batch.size > 0) {
+    await ctx.store.upsert(Array.from(batch.values()));
+  }
 }
 
 /**

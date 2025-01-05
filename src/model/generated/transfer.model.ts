@@ -4,7 +4,7 @@ import {
   PrimaryColumn as PrimaryColumn_,
   Index as Index_,
   ManyToOne as ManyToOne_,
-} from "typeorm";
+} from "@subsquid/typeorm-store";
 import { Objekt } from "./objekt.model";
 import { Collection } from "./collection.model";
 
