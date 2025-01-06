@@ -173,10 +173,14 @@ async function handleCollection(
   transfer: Transfer
 ) {
   const slug = metadata.objekt.collectionId
-    .replace(/[+()]/g, "") // remove special symbols
-    .replace("ö", "o") // replace ö with o
-    .replace(/ /g, "-") // replace spaces with hyphens
-    .toLowerCase(); // normalize to lowercase
+    .toLowerCase()
+    // replace diacritics
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    // remove non-alphanumeric characters
+    .replace(/[^\w\s-]/g, "")
+    // replace spaces with hyphens
+    .replace(/\s+/g, "-");
 
   // fetch from db
   let collection = await ctx.store.get(Collection, {
