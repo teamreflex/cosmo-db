@@ -174,6 +174,7 @@ async function handleCollection(
 ) {
   const slug = metadata.objekt.collectionId
     .replace(/[+()]/g, "") // remove special symbols
+    .replace("ö", "o") // replace ö with o
     .replace(/ /g, "-") // replace spaces with hyphens
     .toLowerCase(); // normalize to lowercase
 
