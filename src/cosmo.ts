@@ -39,32 +39,3 @@ export async function fetchMetadataFromCosmo(tokenId: string) {
     }
   );
 }
-
-export type Artist = {
-  id: string;
-  name: string;
-  title: string;
-  fandomName: string;
-  logoImageUrl: string;
-  contracts: {
-    Como: string;
-    ComoMinter: string;
-    CommunityPool: string;
-    Objekt: string;
-    ObjektMinter: string;
-    Governor: string;
-  };
-};
-
-/**
- * Fetch artists for their contract addresses.
- */
-export async function fetchArtists() {
-  return await ofetch<{ artists: Artist[] }>(
-    `https://api.cosmo.fans/bff/v3/artists`,
-    {
-      retry: 2,
-      retryDelay: 500, // 500ms backoff
-    }
-  );
-}

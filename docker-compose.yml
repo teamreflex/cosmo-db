@@ -1,7 +1,7 @@
 services:
   db:
     restart: always
-    image: postgres:15
+    image: postgres:17
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -26,6 +26,7 @@ services:
     environment:
       - FORCE_PRETTY_LOGGER
       - RPC_ENDPOINT
+      - SQD_ENDPOINT
       - DB_HOST
       - DB_PORT=5432
       - DB_NAME
@@ -57,23 +58,6 @@ services:
       - PROXY_CACHE_MAX_AGE
     ports:
       - "${PROXY_HTTP_PORT}:${PROXY_HTTP_PORT}"
-    depends_on:
-      - db
-  gravity-api:
-    build:
-      context: .
-      dockerfile: docker/gravity-api.Dockerfile
-    restart: always
-    environment:
-      - DB_HOST
-      - DB_PORT=5432
-      - DB_NAME
-      - DB_READ_USER
-      - DB_READ_PASS
-      - GRAVITY_HTTP_PORT
-      - GRAVITY_CORS
-    ports:
-      - "${GRAVITY_HTTP_PORT}:${GRAVITY_HTTP_PORT}"
     depends_on:
       - db
 volumes:

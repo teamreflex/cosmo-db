@@ -6,18 +6,16 @@ import {
   Log as _Log,
   Transaction as _Transaction,
 } from "@subsquid/evm-processor";
-import * as contractObjekt from "./abi/objekt";
-import * as contractGovernor from "./abi/governor";
-import * as contractComo from "./abi/como";
-import { ARTISTS } from "./constants";
+import * as ABI_OBJEKT from "./abi/objekt";
 import { env } from "./env/processor";
+import { CONTRACTS, COSMO_START_BLOCK } from "./constants";
 
 console.log(
-  `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS} & gravity ${env.ENABLE_GRAVITY}`
+  `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS}`
 );
 
 const processor = new EvmBatchProcessor()
-  .setGateway("https://v2.archive.subsquid.io/network/polygon-mainnet")
+  .setGateway(env.SQD_ENDPOINT)
   .setRpcEndpoint({
     url: env.RPC_ENDPOINT,
     rateLimit: env.RPC_RATE_LIMIT,
@@ -35,42 +33,19 @@ const processor = new EvmBatchProcessor()
   })
   .setFinalityConfirmation(env.RPC_FINALITY);
 
-// add on per-artist options
-for (const artist of ARTISTS) {
-  processor
-    // objekt transfers
-    .addLog({
-      address: [artist.contracts.Objekt],
-      topic0: [contractObjekt.events.Transfer.topic],
-      range: { from: artist.start },
-    })
-    // objekt transferability updates
-    .addTransaction({
-      to: [artist.contracts.Objekt],
-      sighash: [
-        contractObjekt.functions.batchUpdateObjektTransferrability.sighash,
-      ],
-      range: { from: artist.start },
-    })
-    // como transfers
-    .addLog({
-      address: [artist.contracts.Como],
-      topic0: [contractComo.events.Transfer.topic],
-      range: { from: artist.start },
-    })
-    // vote events
-    .addLog({
-      address: [artist.contracts.Governor],
-      topic0: [contractGovernor.events.Voted.topic],
-      range: { from: artist.start },
-    })
-    // vote reveal
-    .addTransaction({
-      to: [artist.contracts.Governor],
-      sighash: [contractGovernor.functions.reveal.sighash],
-      range: { from: artist.start },
-    });
-}
+processor
+  // objekt transfers
+  .addLog({
+    address: [CONTRACTS.OBJEKT],
+    topic0: [ABI_OBJEKT.events.Transfer.topic],
+    range: { from: COSMO_START_BLOCK },
+  })
+  // objekt transferability updates
+  .addTransaction({
+    to: [CONTRACTS.OBJEKT],
+    sighash: [ABI_OBJEKT.functions.batchUpdateObjektTransferability.sighash],
+    range: { from: COSMO_START_BLOCK },
+  });
 
 export { processor };
 export type Fields = EvmBatchProcessorFields<typeof processor>;

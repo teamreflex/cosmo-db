@@ -2,14 +2,11 @@ import { Transfer } from "./model";
 import { Fields, Log, Transaction } from "./processor";
 import { addr } from "./util";
 import { BlockData } from "@subsquid/evm-processor";
-import * as objektAbi from "./abi/objekt";
-import * as comoAbi from "./abi/como";
-import * as governorAbi from "./abi/governor";
+import * as ABI_OBJEKT from "./abi/objekt";
 import { CONTRACTS } from "./constants";
 import { randomUUID } from "crypto";
 
-const transferability = objektAbi.functions.batchUpdateObjektTransferrability;
-const reveal = governorAbi.functions.reveal;
+const transferability = ABI_OBJEKT.functions.batchUpdateObjektTransferability;
 
 /**
  * Parse incoming blocks.
@@ -23,45 +20,27 @@ export function parseBlocks(blocks: BlockData<Fields>[]) {
     transfers: logs
       .map(parseTransferEvent)
       .filter((e) => e !== undefined)
-      .map(
-        (event) =>
-          new Transfer({
-            id: randomUUID(),
-            from: event.from,
-            to: event.to,
-            timestamp: new Date(event.timestamp),
-            tokenId: event.tokenId,
-            hash: event.hash,
-          })
-      ),
+      .map((event) => {
+        return new Transfer({
+          id: randomUUID(),
+          from: event.from,
+          to: event.to,
+          timestamp: new Date(event.timestamp),
+          tokenId: event.tokenId,
+          hash: event.hash,
+        });
+      }),
 
     // objekt transferability updates
     transferability: transactions
       .filter(
         (tx) =>
           !!tx.to &&
-          CONTRACTS.Objekt.includes(addr(tx.to)) &&
+          CONTRACTS.OBJEKT === addr(tx.to) &&
           tx.sighash === transferability.sighash
       )
       .flatMap(parseTransferabilityUpdate)
       .filter((e) => e !== undefined),
-
-    // como balance updates
-    comoBalanceUpdates: logs
-      .filter((log) => CONTRACTS.Como.includes(addr(log.address)))
-      .map(parseComoBalanceEvent)
-      .filter((e) => e !== undefined),
-
-    // vote creations
-    votes: logs
-      .filter((log) => CONTRACTS.Governor.includes(addr(log.address)))
-      .map(parseVote)
-      .filter((e) => e !== undefined),
-
-    // vote reveals
-    voteReveals: transactions
-      .filter((tx) => !!tx.to && CONTRACTS.Governor.includes(addr(tx.to)))
-      .flatMap(parseVoteReveal),
   };
 }
 
@@ -79,8 +58,8 @@ export type TransferEvent = {
  */
 export function parseTransferEvent(log: Log): TransferEvent | undefined {
   try {
-    if (log.topics[0] === objektAbi.events.Transfer.topic) {
-      const event = objektAbi.events.Transfer.decode(log);
+    if (log.topics[0] === ABI_OBJEKT.events.Transfer.topic) {
+      const event = ABI_OBJEKT.events.Transfer.decode(log);
       return {
         hash: log.transactionHash,
         from: addr(event.from),
@@ -108,11 +87,11 @@ export function parseTransferabilityUpdate(
   tx: Transaction
 ): TransferabilityUpdate[] {
   try {
-    const { tokenIds, transferrable } = transferability.decode(tx.input);
+    const { tokenIds, transferable } = transferability.decode(tx.input);
 
     return tokenIds.map((tokenId) => ({
       tokenId: tokenId.toString(),
-      transferable: transferrable,
+      transferable: transferable,
     }));
   } catch (err) {
     return [];
@@ -127,85 +106,3 @@ export type ComoBalanceEvent = {
   value: bigint;
   timestamp: number;
 };
-
-/**
- * Parse a log into a ComoBalance.
- */
-export function parseComoBalanceEvent(log: Log): ComoBalanceEvent | undefined {
-  try {
-    if (log.topics[0] === comoAbi.events.Transfer.topic) {
-      const event = comoAbi.events.Transfer.decode(log);
-
-      return {
-        hash: log.transactionHash,
-        from: addr(event.from),
-        to: addr(event.to),
-        contract: addr(log.address),
-        value: event.value,
-        timestamp: log.block.timestamp,
-      };
-    }
-
-    return undefined;
-  } catch (err) {
-    return undefined;
-  }
-}
-
-export type VoteEvent = {
-  id: string;
-  from: string;
-  timestamp: number;
-  contract: string;
-  pollId: number;
-  index: number;
-  amount: bigint;
-};
-
-/**
- * Parse a log into a vote.
- */
-export function parseVote(log: Log): VoteEvent | undefined {
-  try {
-    const event = governorAbi.events.Voted.decode(log);
-
-    return {
-      id: log.id,
-      from: addr(event.voter),
-      timestamp: log.block.timestamp,
-      contract: addr(log.address),
-      pollId: Number(event.pollId),
-      index: Number(event.voteIndex),
-      amount: event.comoAmount,
-    };
-  } catch (err) {
-    return undefined;
-  }
-}
-
-export type VoteReveal = {
-  contract: string;
-  pollId: number;
-  candidateId: number;
-  index: number;
-};
-
-/**
- * Parse an transaction into vote reveals.
- */
-export function parseVoteReveal(tx: Transaction): VoteReveal[] {
-  if (!tx.to) return [];
-
-  try {
-    const { pollId, offset, data } = reveal.decode(tx.input);
-
-    return data.map((entry, i) => ({
-      contract: addr(tx.to!),
-      pollId: Number(pollId),
-      candidateId: Number(entry.votedCandidateId),
-      index: i + Number(offset),
-    }));
-  } catch (err) {
-    return [];
-  }
-}

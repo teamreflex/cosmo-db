@@ -1,14 +1,7 @@
 import { processor, ProcessorContext } from "./processor";
-import { BURN_ADDRESS, CONTRACTS } from "./constants";
-import {
-  ComoBalanceEvent,
-  TransferabilityUpdate,
-  VoteEvent,
-  VoteReveal,
-  parseBlocks,
-} from "./parser";
+import { TransferabilityUpdate, parseBlocks } from "./parser";
 import { ObjektMetadata, fetchMetadataFromCosmo } from "./cosmo";
-import { Collection, ComoBalance, Objekt, Transfer, Vote } from "./model";
+import { Collection, Objekt, Transfer } from "./model";
 import { addr, chunk } from "./util";
 import { TypeormDatabase, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
@@ -17,8 +10,7 @@ import { env } from "./env/processor";
 const db = new TypeormDatabase({ supportHotBlocks: true });
 
 processor.run(db, async (ctx) => {
-  const { transfers, transferability, comoBalanceUpdates, votes, voteReveals } =
-    parseBlocks(ctx.blocks);
+  const { transfers, transferability } = parseBlocks(ctx.blocks);
 
   if (env.ENABLE_OBJEKTS) {
     if (transfers.length > 0) {
@@ -94,72 +86,6 @@ processor.run(db, async (ctx) => {
       );
       await handleTransferabilityUpdates(ctx, transferability);
     }
-  }
-
-  if (env.ENABLE_GRAVITY) {
-    const voteBatch: Vote[] = [];
-
-    if (votes.length > 0) {
-      ctx.log.info(`Processing ${votes.length} gravity votes`);
-    }
-
-    // handle vote creation
-    for (let i = 0; i < votes.length; i++) {
-      const vote = await handleVoteCreation(votes[i]);
-      voteBatch.push(vote);
-    }
-
-    if (voteReveals.length > 0) {
-      ctx.log.info(`Processing ${voteReveals.length} gravity vote reveals`);
-    }
-
-    // handle vote reveals
-    for (let i = 0; i < voteReveals.length; i++) {
-      try {
-        const vote = await handleVoteReveal(ctx, voteBatch, voteReveals[i]);
-        const batchIndex = voteBatch.findIndex((v) => v.id === vote.id);
-        if (batchIndex > -1) {
-          voteBatch[batchIndex] = vote;
-        } else {
-          voteBatch.push(vote);
-        }
-      } catch (err) {
-        ctx.log.error(`Unable to handle vote reveal: ${err}`);
-      }
-    }
-
-    if (voteBatch.length > 0) {
-      await ctx.store.upsert(voteBatch);
-    }
-
-    if (comoBalanceUpdates.length > 0) {
-      ctx.log.info(
-        `Processing ${comoBalanceUpdates.length} COMO balance updates`
-      );
-    }
-
-    // handle como balance updates
-    await chunk(comoBalanceUpdates, 2000, async (chunk) => {
-      const comoBalanceBatch = new Map<string, ComoBalance>();
-      for (let i = 0; i < chunk.length; i++) {
-        const balances = await handleComoBalanceUpdate(
-          ctx,
-          comoBalanceBatch,
-          chunk[i]
-        );
-
-        balances.forEach((balance) => {
-          comoBalanceBatch.set(
-            balanceKey({ owner: balance.owner, contract: balance.contract }),
-            balance
-          );
-        });
-      }
-
-      if (comoBalanceBatch.size > 0) {
-        await ctx.store.upsert(Array.from(comoBalanceBatch.values()));
-      }
-    });
   }
 });
 
@@ -286,123 +212,4 @@ async function handleTransferabilityUpdates(
   if (batch.size > 0) {
     await ctx.store.upsert(Array.from(batch.values()));
   }
-}
-
-/**
- * Create a new vote row.
- */
-async function handleVoteCreation(event: VoteEvent) {
-  return new Vote({
-    id: randomUUID(),
-    from: event.from,
-    createdAt: new Date(event.timestamp),
-    contract: event.contract,
-    pollId: event.pollId,
-    candidateId: undefined,
-    index: event.index,
-    amount: event.amount,
-  });
-}
-
-/**
- * Update vote with reveal.
- */
-async function handleVoteReveal(
-  ctx: ProcessorContext<Store>,
-  buffer: Vote[],
-  event: VoteReveal
-) {
-  let vote = buffer.find((v) => {
-    return (
-      v.contract === event.contract &&
-      v.pollId === event.pollId &&
-      v.index === event.index
-    );
-  });
-
-  // fetch from db
-  if (!vote) {
-    vote = await ctx.store.get(Vote, {
-      where: {
-        contract: event.contract,
-        pollId: event.pollId,
-        index: event.index,
-      },
-    });
-  }
-
-  if (!vote) {
-    throw new Error(`Unable to find vote for reveal ${event.pollId}`);
-  }
-
-  // update vote
-  vote.candidateId = event.candidateId;
-
-  return vote;
-}
-
-const EXCLUDE = [...Object.values(CONTRACTS).flat(), BURN_ADDRESS];
-/**
- * Update como balance.
- */
-async function handleComoBalanceUpdate(
-  ctx: ProcessorContext<Store>,
-  buffer: Map<string, ComoBalance>,
-  event: ComoBalanceEvent
-) {
-  const toUpdate: ComoBalance[] = [];
-
-  if (EXCLUDE.includes(event.from) === false) {
-    const from = await getBalance(ctx, buffer, event.from, event.contract);
-
-    from.amount -= event.value;
-    toUpdate.push(from);
-  }
-
-  if (EXCLUDE.includes(event.to) === false) {
-    const to = await getBalance(ctx, buffer, event.to, event.contract);
-
-    to.amount += event.value;
-    toUpdate.push(to);
-  }
-
-  return toUpdate;
-}
-
-/**
- * For the sake of not being able to mess this up.
- */
-function balanceKey({ owner, contract }: { owner: string; contract: string }) {
-  return `${owner}-${contract}`;
-}
-
-/**
- * Fetch a como balance from the buffer, db or create a new one.
- */
-async function getBalance(
-  ctx: ProcessorContext<Store>,
-  buffer: Map<string, ComoBalance>,
-  owner: string,
-  contract: string
-) {
-  let balance = buffer.get(balanceKey({ owner, contract }));
-
-  // fetch from db
-  if (!balance) {
-    balance = await ctx.store.get(ComoBalance, {
-      where: { owner, contract },
-    });
-  }
-
-  // create
-  if (!balance) {
-    balance = new ComoBalance({
-      id: randomUUID(),
-      contract: contract,
-      owner: owner,
-      amount: BigInt(0),
-    });
-  }
-
-  return balance;
 }
