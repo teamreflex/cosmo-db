@@ -26,6 +26,8 @@ services:
     environment:
       - FORCE_PRETTY_LOGGER
       - RPC_ENDPOINT
+      - RPC_RATE_LIMIT
+      - RPC_FINALITY
       - SQD_ENDPOINT
       - DB_HOST
       - DB_PORT=5432
