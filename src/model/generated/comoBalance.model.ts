@@ -7,8 +7,10 @@ export class ComoBalance {
     Object.assign(this, props);
   }
 
+  // for some reason subsquid tries to cast this to ::text, so uuid won't work
   @PrimaryColumn({
-    type: "uuid",
+    type: "varchar",
+    length: 36,
   })
   id!: string;
 

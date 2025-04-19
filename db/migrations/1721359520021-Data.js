@@ -3,7 +3,7 @@ module.exports = class Data1721359520021 {
 
   async up(db) {
     await db.query(
-      `CREATE TABLE "objekt" ("id" varchar NOT NULL, "owner" text NOT NULL, "minted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "received_at" TIMESTAMP WITH TIME ZONE NOT NULL, "serial" integer NOT NULL, "transferable" boolean NOT NULL, "collection_id" uuid, CONSTRAINT "PK_a50fda223abd7f6ae55f2cf629f" PRIMARY KEY ("id"))`
+      `CREATE TABLE "objekt" ("id" varchar NOT NULL, "owner" text NOT NULL, "minted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "received_at" TIMESTAMP WITH TIME ZONE NOT NULL, "serial" integer NOT NULL, "transferable" boolean NOT NULL, "collection_id" varchar(36), CONSTRAINT "PK_a50fda223abd7f6ae55f2cf629f" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_d2ddf18405b46538e169ab03e8" ON "objekt" ("owner") `
@@ -21,7 +21,7 @@ module.exports = class Data1721359520021 {
       `CREATE INDEX "IDX_cc0196669f13f5958a307824a2" ON "objekt" ("collection_id") `
     );
     await db.query(
-      `CREATE TABLE "transfer" ("id" uuid NOT NULL, "from" text NOT NULL, "to" text NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "token_id" text NOT NULL, "hash" text NOT NULL, "objekt_id" varchar, "collection_id" uuid, CONSTRAINT "PK_fd9ddbdd49a17afcbe014401295" PRIMARY KEY ("id"))`
+      `CREATE TABLE "transfer" ("id" varchar(36) NOT NULL, "from" text NOT NULL, "to" text NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "token_id" text NOT NULL, "hash" text NOT NULL, "objekt_id" varchar, "collection_id" varchar(36), CONSTRAINT "PK_fd9ddbdd49a17afcbe014401295" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_be54ea276e0f665ffc38630fc0" ON "transfer" ("from") `
@@ -36,7 +36,7 @@ module.exports = class Data1721359520021 {
       `CREATE INDEX "IDX_15a8d2966ae7e5e9b2ff47104f" ON "transfer" ("collection_id") `
     );
     await db.query(
-      `CREATE TABLE "collection" ("id" uuid NOT NULL, "contract" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "slug" text NOT NULL, "collection_id" text NOT NULL, "season" text NOT NULL, "member" text NOT NULL, "artist" text NOT NULL, "collection_no" text NOT NULL, "class" text NOT NULL, "thumbnail_image" text NOT NULL, "front_image" text NOT NULL, "back_image" text NOT NULL, "background_color" text NOT NULL, "text_color" text NOT NULL, "accent_color" text NOT NULL, "como_amount" integer NOT NULL, "on_offline" text NOT NULL, CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85" PRIMARY KEY ("id"))`
+      `CREATE TABLE "collection" ("id" varchar(36) NOT NULL, "contract" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "slug" text NOT NULL, "collection_id" text NOT NULL, "season" text NOT NULL, "member" text NOT NULL, "artist" text NOT NULL, "collection_no" text NOT NULL, "class" text NOT NULL, "thumbnail_image" text NOT NULL, "front_image" text NOT NULL, "back_image" text NOT NULL, "background_color" text NOT NULL, "text_color" text NOT NULL, "accent_color" text NOT NULL, "como_amount" integer NOT NULL, "on_offline" text NOT NULL, CONSTRAINT "PK_ad3f485bbc99d875491f44d7c85" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_e814aff6539600dfcc88af41fc" ON "collection" ("contract") `
@@ -66,7 +66,7 @@ module.exports = class Data1721359520021 {
       `CREATE INDEX "IDX_429351eac26f87942861266e48" ON "collection" ("on_offline") `
     );
     await db.query(
-      `CREATE TABLE "como_balance" ("id" uuid NOT NULL, "contract" text NOT NULL, "owner" text NOT NULL, "amount" numeric NOT NULL, CONSTRAINT "PK_965a782766b42e9c0cf627e9295" PRIMARY KEY ("id"))`
+      `CREATE TABLE "como_balance" ("id" varchar(36) NOT NULL, "contract" text NOT NULL, "owner" text NOT NULL, "amount" numeric NOT NULL, CONSTRAINT "PK_965a782766b42e9c0cf627e9295" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_e955d648996ebf3ae54bfa4c40" ON "como_balance" ("contract") `
@@ -81,7 +81,7 @@ module.exports = class Data1721359520021 {
       `CREATE INDEX "IDX_0b05935e7f689d090d1a67a8cf" ON "como_balance" ("owner", "contract") `
     );
     await db.query(
-      `CREATE TABLE "vote" ("id" uuid NOT NULL, "from" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "contract" text NOT NULL, "poll_id" integer NOT NULL, "candidate_id" integer, "index" integer NOT NULL, "amount" numeric NOT NULL, CONSTRAINT "PK_2d5932d46afe39c8176f9d4be72" PRIMARY KEY ("id"))`
+      `CREATE TABLE "vote" ("id" varchar(36) NOT NULL, "from" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "contract" text NOT NULL, "poll_id" integer NOT NULL, "candidate_id" integer, "index" integer NOT NULL, "amount" numeric NOT NULL, CONSTRAINT "PK_2d5932d46afe39c8176f9d4be72" PRIMARY KEY ("id"))`
     );
     await db.query(
       `CREATE INDEX "IDX_8ea4539f32b721cfed8cb4796c" ON "vote" ("from") `
