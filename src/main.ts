@@ -1,6 +1,6 @@
 import { processor, ProcessorContext } from "./processor";
 import { TransferabilityUpdate, parseBlocks } from "./parser";
-import { ObjektMetadata, fetchMetadataFromCosmo } from "./cosmo";
+import { MetadataV1, fetchMetadata } from "./cosmo";
 import { Collection, Objekt, Transfer } from "./model";
 import { addr, chunk } from "./util";
 import { TypeormDatabase, Store } from "@subsquid/typeorm-store";
@@ -24,7 +24,7 @@ processor.run(db, async (ctx) => {
       const objektBatch = new Map<string, Objekt>();
 
       const metadataBatch = await Promise.allSettled(
-        chunk.map((e) => fetchMetadataFromCosmo(e.tokenId))
+        chunk.map((e) => fetchMetadata(e.tokenId))
       );
 
       // iterate over each objekt metadata request
@@ -94,7 +94,7 @@ processor.run(db, async (ctx) => {
  */
 async function handleCollection(
   ctx: ProcessorContext<Store>,
-  metadata: ObjektMetadata,
+  metadata: MetadataV1,
   buffer: Map<string, Collection>,
   transfer: Transfer
 ) {
@@ -156,7 +156,7 @@ async function handleCollection(
  */
 async function handleObjekt(
   ctx: ProcessorContext<Store>,
-  metadata: ObjektMetadata,
+  metadata: MetadataV1,
   buffer: Map<string, Objekt>,
   transfer: Transfer
 ) {
