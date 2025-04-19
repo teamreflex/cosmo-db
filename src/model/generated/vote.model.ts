@@ -1,46 +1,43 @@
-import {
-  Entity as Entity_,
-  Column as Column_,
-  PrimaryColumn as PrimaryColumn_,
-  Index as Index_,
-} from "@subsquid/typeorm-store";
+import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 import * as marshal from "./marshal";
 
-@Entity_()
+@Entity()
 export class Vote {
   constructor(props?: Partial<Vote>) {
     Object.assign(this, props);
   }
 
-  @PrimaryColumn_()
+  @PrimaryColumn({
+    type: "uuid",
+  })
   id!: string;
 
-  @Index_()
-  @Column_("text", { nullable: false })
+  @Index()
+  @Column("text", { nullable: false })
   from!: string;
 
-  @Index_()
-  @Column_("timestamp with time zone", { nullable: false })
+  @Index()
+  @Column("timestamp with time zone", { nullable: false })
   createdAt!: Date;
 
-  @Index_()
-  @Column_("text", { nullable: false })
+  @Index()
+  @Column("text", { nullable: false })
   contract!: string;
 
-  @Index_()
-  @Column_("int4", { nullable: false })
+  @Index()
+  @Column("int4", { nullable: false })
   pollId!: number;
 
-  @Index_()
-  @Column_("int4", { nullable: true })
+  @Index()
+  @Column("int4", { nullable: true })
   candidateId!: number | undefined | null;
 
-  @Index_()
-  @Column_("int4", { nullable: true })
+  @Index()
+  @Column("int4", { nullable: true })
   index!: number;
 
-  @Index_()
-  @Column_("numeric", {
+  @Index()
+  @Column("numeric", {
     transformer: marshal.bigintTransformer,
     nullable: false,
   })

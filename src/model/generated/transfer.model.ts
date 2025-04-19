@@ -1,44 +1,40 @@
-import {
-  Entity as Entity_,
-  Column as Column_,
-  PrimaryColumn as PrimaryColumn_,
-  Index as Index_,
-  ManyToOne as ManyToOne_,
-} from "@subsquid/typeorm-store";
+import { Entity, Column, PrimaryColumn, Index, ManyToOne } from "typeorm";
 import { Objekt } from "./objekt.model";
 import { Collection } from "./collection.model";
 
-@Entity_()
+@Entity()
 export class Transfer {
   constructor(props?: Partial<Transfer>) {
     Object.assign(this, props);
   }
 
-  @PrimaryColumn_()
+  @PrimaryColumn({
+    type: "uuid",
+  })
   id!: string;
 
-  @Index_()
-  @Column_("text", { nullable: false })
+  @Index()
+  @Column("text", { nullable: false })
   from!: string;
 
-  @Index_()
-  @Column_("text", { nullable: false })
+  @Index()
+  @Column("text", { nullable: false })
   to!: string;
 
-  @Column_("timestamp with time zone", { nullable: false })
+  @Column("timestamp with time zone", { nullable: false })
   timestamp!: Date;
 
-  @Column_("text", { nullable: false })
+  @Column("text", { nullable: false })
   tokenId!: string;
 
-  @Column_("text", { nullable: false })
+  @Column("text", { nullable: false })
   hash!: string;
 
-  @Index_()
-  @ManyToOne_(() => Objekt, { nullable: true })
+  @Index()
+  @ManyToOne(() => Objekt, { nullable: true })
   objekt!: Objekt;
 
-  @Index_()
-  @ManyToOne_(() => Collection, { nullable: true })
+  @Index()
+  @ManyToOne(() => Collection, { nullable: true })
   collection!: Collection;
 }

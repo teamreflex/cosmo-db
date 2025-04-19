@@ -1,46 +1,46 @@
 import {
-  Entity as Entity_,
-  Column as Column_,
-  PrimaryColumn as PrimaryColumn_,
-  Index as Index_,
-  OneToMany as OneToMany_,
-  ManyToOne as ManyToOne_,
-} from "@subsquid/typeorm-store";
+  Entity,
+  Column,
+  PrimaryColumn,
+  Index,
+  OneToMany,
+  ManyToOne,
+} from "typeorm";
 import { Transfer } from "./transfer.model";
 import { Collection } from "./collection.model";
 
-@Entity_()
+@Entity()
 export class Objekt {
   constructor(props?: Partial<Objekt>) {
     Object.assign(this, props);
   }
 
-  @PrimaryColumn_()
+  @PrimaryColumn()
   id!: string;
 
-  @Index_()
-  @Column_("text", { nullable: false })
+  @Index()
+  @Column("text", { nullable: false })
   owner!: string;
 
-  @Column_("timestamp with time zone", { nullable: false })
+  @Column("timestamp with time zone", { nullable: false })
   mintedAt!: Date;
 
-  @Index_()
-  @Column_("timestamp with time zone", { nullable: false })
+  @Index()
+  @Column("timestamp with time zone", { nullable: false })
   receivedAt!: Date;
 
-  @Index_()
-  @Column_("int4", { nullable: false })
+  @Index()
+  @Column("int4", { nullable: false })
   serial!: number;
 
-  @Index_()
-  @Column_("boolean", { nullable: false })
+  @Index()
+  @Column("boolean", { nullable: false })
   transferable!: boolean;
 
-  @OneToMany_(() => Transfer, (e) => e.objekt)
+  @OneToMany(() => Transfer, (e) => e.objekt)
   transfers!: Transfer[];
 
-  @Index_()
-  @ManyToOne_(() => Collection, { nullable: true })
+  @Index()
+  @ManyToOne(() => Collection, { nullable: true })
   collection!: Collection;
 }
