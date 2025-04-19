@@ -1,7 +1,7 @@
 services:
   db:
     restart: always
-    image: postgres:17
+    image: postgres:15
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
