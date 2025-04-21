@@ -18,7 +18,7 @@ $ docker compose up -d
 
 ### db
 
-Postgres 17 database server.
+Postgres 15 database server.
 
 - `DB_PORT`: Port to expose the server on. Internally it still uses the default port.
 - `DB_READ_USER`: Creates a user with this name, only with SELECT privileges.

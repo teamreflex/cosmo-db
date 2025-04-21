@@ -3,7 +3,7 @@ import { Fields, Log, Transaction } from "./processor";
 import { addr } from "./util";
 import { BlockData } from "@subsquid/evm-processor";
 import * as ABI_OBJEKT from "./abi/objekt";
-import { CONTRACTS } from "./constants";
+import { Addresses } from "./constants";
 import { randomUUID } from "crypto";
 
 const transferability = ABI_OBJEKT.functions.batchUpdateObjektTransferability;
@@ -36,7 +36,7 @@ export function parseBlocks(blocks: BlockData<Fields>[]) {
       .filter(
         (tx) =>
           !!tx.to &&
-          CONTRACTS.OBJEKT === addr(tx.to) &&
+          Addresses.OBJEKT === addr(tx.to) &&
           tx.sighash === transferability.sighash
       )
       .flatMap(parseTransferabilityUpdate)

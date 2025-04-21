@@ -8,7 +8,7 @@ import {
 } from "@subsquid/evm-processor";
 import * as ABI_OBJEKT from "./abi/objekt";
 import { env } from "./env/processor";
-import { CONTRACTS, COSMO_START_BLOCK } from "./constants";
+import { Addresses, COSMO_START_BLOCK } from "./constants";
 
 console.log(
   `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS}`
@@ -36,13 +36,13 @@ const processor = new EvmBatchProcessor()
 processor
   // objekt transfers
   .addLog({
-    address: [CONTRACTS.OBJEKT],
+    address: [Addresses.OBJEKT],
     topic0: [ABI_OBJEKT.events.Transfer.topic],
     range: { from: COSMO_START_BLOCK },
   })
   // objekt transferability updates
   .addTransaction({
-    to: [CONTRACTS.OBJEKT],
+    to: [Addresses.OBJEKT],
     sighash: [ABI_OBJEKT.functions.batchUpdateObjektTransferability.sighash],
     range: { from: COSMO_START_BLOCK },
   });
