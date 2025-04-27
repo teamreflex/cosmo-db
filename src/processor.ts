@@ -7,11 +7,12 @@ import {
   Transaction as _Transaction,
 } from "@subsquid/evm-processor";
 import * as ABI_OBJEKT from "./abi/objekt";
+import * as ABI_COMO from "./abi/como";
 import { env } from "./env/processor";
 import { Addresses, COSMO_START_BLOCK } from "./constants";
 
 console.log(
-  `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS}`
+  `[processor] Starting processor with objekts ${env.ENABLE_OBJEKTS} and gravity ${env.ENABLE_GRAVITY}`
 );
 
 const processor = new EvmBatchProcessor()
@@ -44,6 +45,18 @@ processor
   .addTransaction({
     to: [Addresses.OBJEKT],
     sighash: [ABI_OBJEKT.functions.batchUpdateObjektTransferability.sighash],
+    range: { from: COSMO_START_BLOCK },
+  })
+  // single como transfers
+  .addLog({
+    address: [Addresses.COMO],
+    topic0: [ABI_COMO.events.TransferSingle.topic],
+    range: { from: COSMO_START_BLOCK },
+  })
+  // batch como transfers
+  .addLog({
+    address: [Addresses.COMO],
+    topic0: [ABI_COMO.events.TransferBatch.topic],
     range: { from: COSMO_START_BLOCK },
   });
 

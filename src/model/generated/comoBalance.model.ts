@@ -15,8 +15,8 @@ export class ComoBalance {
   id!: string;
 
   @Index()
-  @Column("text", { nullable: false })
-  contract!: string;
+  @Column("numeric", { nullable: false })
+  tokenId!: number;
 
   @Index()
   @Column("text", { nullable: false })

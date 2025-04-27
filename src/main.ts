@@ -1,16 +1,19 @@
 import { processor, ProcessorContext } from "./processor";
-import { TransferabilityUpdate, parseBlocks } from "./parser";
+import { ComoBalanceEvent, TransferabilityUpdate, parseBlocks } from "./parser";
 import { MetadataV1, fetchMetadata } from "./cosmo";
-import { Collection, Objekt, Transfer } from "./model";
+import { Collection, ComoBalance, Objekt, Transfer } from "./model";
 import { addr, chunk } from "./util";
 import { TypeormDatabase, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { env } from "./env/processor";
+import { Addresses } from "./constants";
 
 const db = new TypeormDatabase({ supportHotBlocks: true });
 
 processor.run(db, async (ctx) => {
-  const { transfers, transferability } = parseBlocks(ctx.blocks);
+  const { transfers, transferability, comoBalanceUpdates } = parseBlocks(
+    ctx.blocks
+  );
 
   if (env.ENABLE_OBJEKTS) {
     if (transfers.length > 0) {
@@ -86,6 +89,37 @@ processor.run(db, async (ctx) => {
       );
       await handleTransferabilityUpdates(ctx, transferability);
     }
+  }
+
+  if (env.ENABLE_GRAVITY) {
+    if (comoBalanceUpdates.length > 0) {
+      ctx.log.info(
+        `Processing ${comoBalanceUpdates.length} COMO balance updates`
+      );
+    }
+
+    // handle como balance updates
+    await chunk(comoBalanceUpdates, 2000, async (chunk) => {
+      const comoBalanceBatch = new Map<string, ComoBalance>();
+      for (let i = 0; i < chunk.length; i++) {
+        const balances = await handleComoBalanceUpdate(
+          ctx,
+          comoBalanceBatch,
+          chunk[i]
+        );
+
+        balances.forEach((balance) => {
+          comoBalanceBatch.set(
+            balanceKey({ owner: balance.owner, tokenId: balance.tokenId }),
+            balance
+          );
+        });
+      }
+
+      if (comoBalanceBatch.size > 0) {
+        await ctx.store.upsert(Array.from(comoBalanceBatch.values()));
+      }
+    });
   }
 });
 
@@ -212,4 +246,71 @@ async function handleTransferabilityUpdates(
   if (batch.size > 0) {
     await ctx.store.upsert(Array.from(batch.values()));
   }
+}
+
+const EXCLUDE = Object.values(Addresses);
+
+/**
+ * Update como balance.
+ */
+async function handleComoBalanceUpdate(
+  ctx: ProcessorContext<Store>,
+  buffer: Map<string, ComoBalance>,
+  event: ComoBalanceEvent
+) {
+  const toUpdate: ComoBalance[] = [];
+
+  if (EXCLUDE.includes(event.from) === false) {
+    const from = await getBalance(ctx, buffer, event.from, event.tokenId);
+
+    from.amount -= event.value;
+    toUpdate.push(from);
+  }
+
+  if (EXCLUDE.includes(event.to) === false) {
+    const to = await getBalance(ctx, buffer, event.to, event.tokenId);
+
+    to.amount += event.value;
+    toUpdate.push(to);
+  }
+
+  return toUpdate;
+}
+
+/**
+ * For the sake of not being able to mess this up.
+ */
+function balanceKey({ owner, tokenId }: { owner: string; tokenId: number }) {
+  return `${owner}-${tokenId}`;
+}
+
+/**
+ * Fetch a como balance from the buffer, db or create a new one.
+ */
+async function getBalance(
+  ctx: ProcessorContext<Store>,
+  buffer: Map<string, ComoBalance>,
+  owner: string,
+  tokenId: number
+) {
+  let balance = buffer.get(balanceKey({ owner, tokenId }));
+
+  // fetch from db
+  if (!balance) {
+    balance = await ctx.store.get(ComoBalance, {
+      where: { owner, tokenId },
+    });
+  }
+
+  // create
+  if (!balance) {
+    balance = new ComoBalance({
+      id: randomUUID(),
+      tokenId: tokenId,
+      owner: owner,
+      amount: BigInt(0),
+    });
+  }
+
+  return balance;
 }
