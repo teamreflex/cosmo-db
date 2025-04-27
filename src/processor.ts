@@ -46,19 +46,19 @@ processor
     to: [Addresses.OBJEKT],
     sighash: [ABI_OBJEKT.functions.batchUpdateObjektTransferability.sighash],
     range: { from: COSMO_START_BLOCK },
-  })
-  // single como transfers
-  .addLog({
-    address: [Addresses.COMO],
-    topic0: [ABI_COMO.events.TransferSingle.topic],
-    range: { from: COSMO_START_BLOCK },
-  })
-  // batch como transfers
-  .addLog({
-    address: [Addresses.COMO],
-    topic0: [ABI_COMO.events.TransferBatch.topic],
-    range: { from: COSMO_START_BLOCK },
   });
+// // single como transfers
+// .addLog({
+//   address: [Addresses.COMO],
+//   topic0: [ABI_COMO.events.TransferSingle.topic],
+//   range: { from: COSMO_START_BLOCK },
+// })
+// // batch como transfers
+// .addLog({
+//   address: [Addresses.COMO],
+//   topic0: [ABI_COMO.events.TransferBatch.topic],
+//   range: { from: COSMO_START_BLOCK },
+// });
 
 export { processor };
 export type Fields = EvmBatchProcessorFields<typeof processor>;
