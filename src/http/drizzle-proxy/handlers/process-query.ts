@@ -1,28 +1,31 @@
-import { Client } from "pg";
 import { Context } from "hono";
-import { env } from "../env";
-
-const readClient = new Client({
-  host: env.DB_HOST,
-  user: env.DB_READ_USER,
-  database: env.DB_NAME,
-  password: env.DB_READ_PASS,
-  port: env.DB_PORT,
-});
-
-// @ts-ignore - using bun
-await readClient.connect();
+import { readPool } from "../db";
 
 export async function processQuery(c: Context) {
   const { sql, params, method } = await c.req.json();
 
+  // validate input
+  if (!sql || !method) {
+    return c.json({ error: "Missing required fields: sql, method" }, 422);
+  }
+
   // prevent multiple queries
-  const sqlBody = sql.replace(/;/g, "");
+  if (
+    sql.includes(";") &&
+    sql
+      .trim()
+      .split(";")
+      .filter((s: string) => s.trim()).length > 1
+  ) {
+    return c.json({ error: "Multiple queries not allowed" }, 422);
+  }
+
+  const client = await readPool.connect();
 
   try {
     if (method === "all") {
-      const result = await readClient.query({
-        text: sqlBody,
+      const result = await client.query({
+        text: sql,
         values: params,
         rowMode: "array",
       });
@@ -30,16 +33,18 @@ export async function processQuery(c: Context) {
     }
 
     if (method === "execute") {
-      const result = await readClient.query({
-        text: sqlBody,
+      const result = await client.query({
+        text: sql,
         values: params,
       });
       return c.json(result.rows);
     }
 
-    return c.json({ error: "Unknown method value" }, 500);
+    return c.json({ error: "Unknown method value" }, 422);
   } catch (e) {
-    console.error(e);
-    return c.json({ error: "error" }, 500);
+    console.error("Database query error:", e);
+    return c.json({ error: "Database query failed" }, 500);
+  } finally {
+    client.release(); // always release the connection back to the pool
   }
 }
