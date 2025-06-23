@@ -4,6 +4,7 @@ export async function fetchMetadata(tokenId: string) {
   try {
     return await fetchMetadataV1(tokenId);
   } catch (error) {
+    console.log(`[fetchMetadata] Error fetching v1 metadata: ${error}`);
     const v3 = await fetchMetadataV3(tokenId);
     return normalizeV3(v3, tokenId);
   }
@@ -42,7 +43,8 @@ export async function fetchMetadataV1(tokenId: string) {
   return await ofetch<MetadataV1>(
     `https://api.cosmo.fans/objekt/v1/token/${tokenId}`,
     {
-      retry: 1,
+      retry: 3,
+      retryDelay: 500, // 500ms backoff
     }
   );
 }
@@ -82,7 +84,7 @@ export function normalizeV3(metadata: MetadataV3, tokenId: string): MetadataV1 {
   const collection = getTrait(metadata, tokenId, "Collection");
 
   const thumbnail = metadata.image.replace(/\/(4x|original)/, "/thumbnail");
-  const comoAmount = className === "Double" ? 2 : 1;
+  const comoAmount = ["Double", "Premier"].includes(className) ? 2 : 1;
 
   return {
     name: metadata.name,
@@ -104,7 +106,7 @@ export function normalizeV3(metadata: MetadataV3, tokenId: string): MetadataV1 {
       // not possible to get from v3
       backImage: "",
       accentColor: "",
-      textColor: "",
+      textColor: "#000000",
       objektNo: 0,
       tokenAddress: "",
       transferable: false,
