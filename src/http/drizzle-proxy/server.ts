@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { env } from "./env";
 import { processQuery } from "./handlers/process-query";
 import { processorStatus } from "./handlers/processor-status";
+import { rescanMetadata } from "./handlers/rescan-metadata";
 
 const app = new Hono();
 
@@ -17,6 +18,7 @@ app.use(async (c, next) => {
 
 app.post("/query", processQuery);
 app.get("/status", processorStatus);
+app.post("/rescan-metadata/:tokenId", rescanMetadata);
 
 console.log(`[drizzle-proxy] Listening on port ${env.PROXY_HTTP_PORT}`);
 
