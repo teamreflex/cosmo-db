@@ -1,7 +1,12 @@
 import { processor, ProcessorContext } from "./processor";
-import { ComoBalanceEvent, TransferabilityUpdate, parseBlocks } from "./parser";
+import {
+  ComoBalanceEvent,
+  TransferabilityUpdate,
+  VoteEvent,
+  parseBlocks,
+} from "./parser";
 import { MetadataV1, fetchMetadata } from "./cosmo";
-import { Collection, ComoBalance, Objekt, Transfer } from "./model";
+import { Collection, ComoBalance, Objekt, Transfer, Vote } from "./model";
 import { addr, chunk } from "./util";
 import { TypeormDatabase, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
@@ -11,7 +16,7 @@ import { Addresses } from "./constants";
 const db = new TypeormDatabase({ supportHotBlocks: true });
 
 processor.run(db, async (ctx) => {
-  const { transfers, transferability, comoBalanceUpdates } = parseBlocks(
+  const { transfers, transferability, comoBalanceUpdates, votes } = parseBlocks(
     ctx.blocks
   );
 
@@ -92,6 +97,22 @@ processor.run(db, async (ctx) => {
   }
 
   if (env.ENABLE_GRAVITY) {
+    const voteBatch: Vote[] = [];
+
+    if (votes.length > 0) {
+      ctx.log.info(`Processing ${votes.length} gravity votes`);
+    }
+
+    // handle vote creation
+    for (let i = 0; i < votes.length; i++) {
+      const vote = await handleVoteCreation(votes[i]);
+      voteBatch.push(vote);
+    }
+
+    if (voteBatch.length > 0) {
+      await ctx.store.upsert(voteBatch);
+    }
+
     if (comoBalanceUpdates.length > 0) {
       ctx.log.info(
         `Processing ${comoBalanceUpdates.length} COMO balance updates`
@@ -313,4 +334,18 @@ async function getBalance(
   }
 
   return balance;
+}
+
+/**
+ * Create a new vote row.
+ */
+async function handleVoteCreation(event: VoteEvent) {
+  return new Vote({
+    id: randomUUID(),
+    from: event.from,
+    createdAt: new Date(event.timestamp),
+    contract: event.contract,
+    pollId: event.pollId,
+    amount: event.tokenAmount,
+  });
 }

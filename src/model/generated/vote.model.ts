@@ -31,14 +31,6 @@ export class Vote {
   pollId!: number;
 
   @Index()
-  @Column("int4", { nullable: true })
-  candidateId!: number | undefined | null;
-
-  @Index()
-  @Column("int4", { nullable: true })
-  index!: number;
-
-  @Index()
   @Column("numeric", {
     transformer: marshal.bigintTransformer,
     nullable: false,

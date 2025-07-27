@@ -4,6 +4,7 @@ import { addr } from "./util";
 import { BlockData } from "@subsquid/evm-processor";
 import * as ABI_OBJEKT from "./abi/objekt";
 import * as ABI_COMO from "./abi/como";
+import * as ABI_GRAVITY from "./abi/gravity";
 import { Addresses } from "./constants";
 import { randomUUID } from "crypto";
 
@@ -47,6 +48,12 @@ export function parseBlocks(blocks: BlockData<Fields>[]) {
     comoBalanceUpdates: logs
       .filter((log) => addr(Addresses.COMO) === addr(log.address))
       .flatMap(parseComoBalanceEvents),
+
+    // vote creations
+    votes: logs
+      .filter((log) => addr(Addresses.GRAVITY) === addr(log.address))
+      .map(parseVote)
+      .filter((e) => e !== undefined),
   };
 }
 
@@ -156,5 +163,34 @@ export function parseComoBalanceEvents(log: Log): ComoBalanceEvent[] {
     }
   } catch (err) {
     return [];
+  }
+}
+
+export type VoteEvent = {
+  id: string;
+  from: string;
+  timestamp: number;
+  contract: string;
+  pollId: number;
+  tokenAmount: bigint;
+};
+
+/**
+ * Parse a log into a vote.
+ */
+export function parseVote(log: Log): VoteEvent | undefined {
+  try {
+    const event = ABI_GRAVITY.events.Voted.decode(log);
+
+    return {
+      id: log.id,
+      from: addr(event.voter),
+      timestamp: log.block.timestamp,
+      contract: addr(log.address),
+      pollId: Number(event.pollId),
+      tokenAmount: event.tokenAmount,
+    };
+  } catch (err) {
+    return undefined;
   }
 }
