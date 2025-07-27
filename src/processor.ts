@@ -8,6 +8,7 @@ import {
 } from "@subsquid/evm-processor";
 import * as ABI_OBJEKT from "./abi/objekt";
 import * as ABI_COMO from "./abi/como";
+import * as ABI_GRAVITY from "./abi/gravity";
 import { env } from "./env/processor";
 import { Addresses, COSMO_START_BLOCK } from "./constants";
 
@@ -57,6 +58,12 @@ processor
   .addLog({
     address: [Addresses.COMO],
     topic0: [ABI_COMO.events.TransferBatch.topic],
+    range: { from: COSMO_START_BLOCK },
+  })
+  // gravity votes
+  .addLog({
+    address: [Addresses.GRAVITY],
+    topic0: [ABI_GRAVITY.events.Voted.topic],
     range: { from: COSMO_START_BLOCK },
   });
 
