@@ -18,6 +18,7 @@ type Collection @entity {
   accentColor: String!
   comoAmount: Int!
   onOffline: String! @index
+  bandImageUrl: String
   transfers: [Transfer!] @derivedFrom(field: "collection")
   objekts: [Objekt!] @derivedFrom(field: "collection")
 }

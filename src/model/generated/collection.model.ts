@@ -75,6 +75,9 @@ export class Collection {
   @Column("text", { nullable: false })
   onOffline!: string;
 
+  @Column({ type: "varchar", length: 255, nullable: true })
+  bandImageUrl!: string | null;
+
   @OneToMany(() => Transfer, (e) => e.collection)
   transfers!: Transfer[];
 
