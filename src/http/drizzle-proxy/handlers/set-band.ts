@@ -51,7 +51,7 @@ export async function setBand(c: Context) {
       params
     );
 
-    return c.json({ message: "Dand image url(s) updated" }, 200);
+    return c.json({ message: "Band image url(s) updated" }, 200);
   } catch (e) {
     console.error("Database error:", e);
     return c.json({ error: "Database error" }, 500);
