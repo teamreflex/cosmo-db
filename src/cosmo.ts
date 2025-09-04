@@ -1,13 +1,14 @@
 import { ofetch } from "ofetch";
 
 export async function fetchMetadata(tokenId: string) {
-  try {
-    return await fetchMetadataV1(tokenId);
-  } catch (error) {
-    console.log(`[fetchMetadata] Error fetching v1 metadata: ${error}`);
-    const v3 = await fetchMetadataV3(tokenId);
-    return normalizeV3(v3, tokenId);
-  }
+  return await fetchMetadataV1(tokenId);
+  // try {
+  //   return await fetchMetadataV1(tokenId);
+  // } catch (error) {
+  //   console.log(`[fetchMetadata] Error fetching v1 metadata: ${error}`);
+  //   const v3 = await fetchMetadataV3(tokenId);
+  //   return normalizeV3(v3, tokenId);
+  // }
 }
 
 export type MetadataV1 = {
@@ -43,8 +44,8 @@ export async function fetchMetadataV1(tokenId: string) {
   return await ofetch<MetadataV1>(
     `https://api.cosmo.fans/objekt/v1/token/${tokenId}`,
     {
-      retry: 3,
-      retryDelay: 500, // 500ms backoff
+      retry: 6,
+      retryDelay: 750, // 750ms backoff
     }
   );
 }
@@ -118,7 +119,17 @@ export function normalizeV3(metadata: MetadataV3, tokenId: string): MetadataV1 {
  * Get a trait from the metadata attributes array.
  */
 function getTrait(metadata: MetadataV3, tokenId: string, trait: string) {
-  const attr = metadata.attributes.find((attr) => attr.trait_type === trait);
+  const attr = metadata.attributes.find((attr, i, arr) => {
+    // special case for unit objekts
+    if (
+      trait === "Member" &&
+      arr.findIndex((a) => a.trait_type === "Class" && a.value === "Unit") > -1
+    ) {
+      return attr.value.includes(" x ");
+    }
+
+    return attr.trait_type === trait;
+  });
   if (!attr) {
     throw new Error(
       `[normalizeV3] Trait ${trait} not found for token ${tokenId}`
