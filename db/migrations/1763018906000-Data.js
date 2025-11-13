@@ -1,5 +1,5 @@
-module.exports = class Data1755862698000 {
-  name = "Data1755862698000";
+module.exports = class Data1763018906000 {
+  name = "Data1763018906000";
 
   async up(db) {
     // add front_media column to collection table
