@@ -78,6 +78,9 @@ export class Collection {
   @Column({ type: "varchar", length: 255, nullable: true })
   bandImageUrl!: string | null;
 
+  @Column({ type: "varchar", length: 255, nullable: true })
+  frontMedia!: string | null;
+
   @OneToMany(() => Transfer, (e) => e.collection)
   transfers!: Transfer[];
 

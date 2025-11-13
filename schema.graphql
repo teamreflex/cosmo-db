@@ -19,6 +19,7 @@ type Collection @entity {
   comoAmount: Int!
   onOffline: String! @index
   bandImageUrl: String
+  frontMedia: String
   transfers: [Transfer!] @derivedFrom(field: "collection")
   objekts: [Objekt!] @derivedFrom(field: "collection")
 }
