@@ -2,7 +2,15 @@
 
 A [Subsquid](https://subsquid.io/) indexer for ARTMS and tripleS NFTs.
 
-**NOTE:** On April 18th 2025, COSMO was migrated from the Polygon blockchain over to Abstract. The last snapshot of the project using Polygon can be found on the [`checkpoint/polygon`](https://github.com/teamreflex/cosmo-db/tree/checkpoint/polygon) branch. `main` contains the latest version running on Abstract.
+## Deprecated
+
+As of January 17th 2026, this repo has been merged into the main [cosmo-web](https://github.com/teamreflex/cosmo-web/tree/abstract-nextjs) monorepo and is no longer compatible with the `main` branch. The only version of the web app this `cosmo-db` repo will work with is [cosmo-web@abstract-nextjs](https://github.com/teamreflex/cosmo-web/tree/abstract-nextjs).
+
+| cosmo-web branch    | Compatible cosmo-db branch |
+| -------- | ------- |
+| `main`    | N/A    |
+| `abstract-nextjs` | `main`     |
+| `polygon`  | `checkpoint/polygon`    |
 
 ## Setup
 
